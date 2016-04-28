@@ -1,0 +1,14 @@
+/**
+ * Styles for the login form
+ */
+.social-api.login-with {
+  font-size: 1.5em;
+  font-weight: bold;
+}
+.social-api.auth-link {
+  border-bottom: none;
+}
+.social-api.auth-icon {
+  width: 3em;
+  margin-right: 5px;
+}

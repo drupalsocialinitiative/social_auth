@@ -1,0 +1,13 @@
+<h3>
+  {% trans %}
+    <span class="social-api login-with">Or login with...</span>
+  {% endtrans %}
+</h3>
+
+{{ attach_library('social_api/auth-icons') }}
+
+{% for social_network in social_networks %}
+  <a class="social-api auth-link" href="{{ path(social_network.route) }}">
+    <img class="social-api auth-icon" src="../{{ social_network.img_path }}" alt="">
+  </a>
+{% endfor %}
