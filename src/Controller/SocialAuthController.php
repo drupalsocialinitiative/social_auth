@@ -16,7 +16,7 @@ class SocialAuthController extends SocialApiController
    * @param string $type
    * @return array
    */
-  public function integrations($type = 'user_auth') {
+  public function integrations($type = 'social_auth') {
     return parent::integrations($type);
   }
 

@@ -1,5 +1,5 @@
 social_auth.integrations:
-  path: '/admin/config/social-api/user-authentication'
+  path: '/admin/config/social-api/social-auth'
   defaults:
     _controller: '\Drupal\social_auth\Controller\SocialAuthController::integrations'
     _title: 'User authentication'
