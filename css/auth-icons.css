@@ -1,14 +1,14 @@
 /**
  * Styles for the login form
  */
-.social-api.login-with {
+.social-auth.login-with {
   font-size: 1.5em;
   font-weight: bold;
 }
-.social-api.auth-link {
+.social-auth.auth-link {
   border-bottom: none;
 }
-.social-api.auth-icon {
+.social-auth.auth-icon {
   width: 3em;
   margin-right: 5px;
 }

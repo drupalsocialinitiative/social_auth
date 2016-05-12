@@ -29,4 +29,6 @@ function social_auth_form_user_login_form_alter(&$form, FormStateInterface $form
  */
 function social_auth_preprocess_login_with(&$variables) {
   $variables['social_networks'] = \Drupal::config('social_api.settings')->get('auth');
+
+  $variables['base_path'] = base_path();
 }
