@@ -1,10 +1,4 @@
-<h3>
-  {% set module = 'social-auth' %}
-
-  {% trans %}
-    <span class="{{ module }} login-with">Or login with...</span>
-  {% endtrans %}
-</h3>
+{% set module = 'social-auth' %}
 
 {{ attach_library('social_auth/auth-icons') }}
 

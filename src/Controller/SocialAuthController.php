@@ -32,7 +32,7 @@ class SocialAuthController extends SocialApiController {
    * @param string $img_path
    */
   public static function setLoginButtonSettings($module, $route, $img_path) {
-    $config = \Drupal::configFactory()->getEditable('social_api.settings');
+    $config = \Drupal::configFactory()->getEditable('social_auth.settings');
 
     $img_path = drupal_get_path('module', $module) . '/' . $img_path;
 
@@ -47,7 +47,7 @@ class SocialAuthController extends SocialApiController {
    * @param $module
    */
   public static function deleteLoginButtonSettings($module) {
-    $config = \Drupal::configFactory()->getEditable('social_api.settings');;
+    $config = \Drupal::configFactory()->getEditable('social_auth.settings');;
 
     $config->clear('auth.' . $module)
       ->save();
