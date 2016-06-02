@@ -49,7 +49,7 @@ class SocialAuthLoginBlock extends BlockBase implements ContainerFactoryPluginIn
 			$configuration,
 			$plugin_id,
 			$plugin_definition,
-			$container->get('config.factory')->get('social_api.settings')
+			$container->get('config.factory')->get('social_auth.settings')
 		);
 	}
 
