@@ -5,9 +5,11 @@
  */
 namespace Drupal\social_auth\Plugin\Block;
 
+use Drupal\Core\Access\AccessResult;
 use Drupal\Core\Block\BlockBase;
 use Drupal\Core\Config\ImmutableConfig;
 use Drupal\Core\Plugin\ContainerFactoryPluginInterface;
+use Drupal\Core\Session\AccountInterface;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
 /**
@@ -59,5 +61,15 @@ class SocialAuthLoginBlock extends BlockBase implements ContainerFactoryPluginIn
 			'#theme' => 'login_with',
 			'#social_networks' => $this->socialAuthConfig->get('auth'),
 		);
+	}
+
+	/**
+	 * {@inheritdoc}
+	 */
+	public function blockAccess(AccountInterface $account) {
+		if($account->isAnonymous()) {
+			return AccessResult::allowed();
+		}
+		return AccessResult::forbidden();
 	}
 }
