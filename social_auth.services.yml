@@ -1,0 +1,8 @@
+services:
+  social_auth.user_manager:
+      class: Drupal\social_auth\SocialAuthUserManager
+      arguments:
+        - @config.factory
+        - @logger.factory
+        - @entity_type.manager
+        - @entity_field.manager
