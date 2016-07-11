@@ -1,8 +1,4 @@
 <?php
-/**
- * @file
- * Contains Drupal\social_auth\Controller\SocialAuthController
- */
 
 namespace Drupal\social_auth\Controller;
 
