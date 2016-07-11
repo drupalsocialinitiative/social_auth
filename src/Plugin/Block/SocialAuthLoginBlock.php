@@ -1,5 +1,8 @@
 <?php
-
+/**
+ * @file
+ * Contains \Drupal\social_auth\Plugin\Block\SocialAuthLoginBlock
+ */
 namespace Drupal\social_auth\Plugin\Block;
 
 use Drupal\Core\Access\AccessResult;

@@ -1,5 +1,10 @@
 <?php
 
+/**
+ * @file
+ * Contains \Drupal\social_auth\SocialAuthUserManager.
+ */
+
 namespace Drupal\social_auth;
 
 use Drupal\user\Entity\User;
