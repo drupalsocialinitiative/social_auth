@@ -1,13 +1,12 @@
 <?php
-/**
- * @file
- * Contains Drupal\social_auth\Controller\SocialAuthController
- */
 
 namespace Drupal\social_auth\Controller;
 
 use Drupal\social_api\Controller\SocialApiController;
 
+/**
+ * Provides methods to add or remove default login buttons
+ */
 class SocialAuthController extends SocialApiController {
   /**
    * Render the list of plugins for user authentication
