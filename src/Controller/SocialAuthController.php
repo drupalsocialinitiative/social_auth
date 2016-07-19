@@ -4,28 +4,27 @@ namespace Drupal\social_auth\Controller;
 
 use Drupal\social_api\Controller\SocialApiController;
 
+/**
+ * Manages login buttons settings and integration table renderization.
+ */
 class SocialAuthController extends SocialApiController {
+
   /**
-   * Render the list of plugins for user authentication
-   *
-   * @param string $type
-   * @return array
+   * {@inheritdoc}
    */
   public function integrations($type = 'social_auth') {
     return parent::integrations($type);
   }
 
   /**
-   * Set the settings for the login button for the given social networking
+   * Sets the settings for the login button for the given social networking.
    *
-   * The module machine name that implements its login button settings
    * @param string $module
-   *
-   * The route name of the user authentication controller
+   *   The module machine name.
    * @param string $route
-   *
-   * The path of the image for login
+   *   The route name of the user authentication controller.
    * @param string $img_path
+   *   The path of the image for login.
    */
   public static function setLoginButtonSettings($module, $route, $img_path) {
     $config = \Drupal::configFactory()->getEditable('social_auth.settings');
@@ -38,9 +37,10 @@ class SocialAuthController extends SocialApiController {
   }
 
   /**
-   * Delete the settings for the login button for the given social networking
+   * Delete the settings for the login button for the given social networking.
    *
-   * @param $module
+   * @param string $module
+   *   The module machine name.
    */
   public static function deleteLoginButtonSettings($module) {
     $config = \Drupal::configFactory()->getEditable('social_auth.settings');;
@@ -48,4 +48,5 @@ class SocialAuthController extends SocialApiController {
     $config->clear('auth.' . $module)
       ->save();
   }
+
 }

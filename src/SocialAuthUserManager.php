@@ -71,12 +71,9 @@ class SocialAuthUserManager {
    * @param string $email
    *   User's email address.
    *
-   * @param string $message
-   *   Drupal message if user could not be created
-   *
-   * @return \Drupal\user\Entity\User|false Drupal user account if user was created
-   * Drupal user account if user was created
-   * False otherwise
+   * @return \Drupal\user\Entity\User|false
+   *   Drupal user account if user was created
+   *   False otherwise
    */
   public function createUser($name, $email) {
     // Make sure we have everything we need.
@@ -224,11 +221,14 @@ class SocialAuthUserManager {
    * We need to wrap the legacy procedural Drupal API functions so that we are
    * not using them directly in our own methods. This way we can unit test our
    * own methods.
-   * @see user_password
    *
    * @param int $length
+   *   Length of the password.
    *
    * @return string
+   *   The password.
+   *
+   * @see user_password
    */
   protected function userPassword($length) {
     return user_password($length);
