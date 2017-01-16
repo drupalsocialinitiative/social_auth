@@ -2,20 +2,27 @@
 
 namespace Drupal\social_auth;
 
+use Drupal\Core\StringTranslation\StringTranslationTrait;
+use Drupal\social_auth\Event\SocialAuthUserEvent;
+use Drupal\social_auth\Event\SocialAuthEvents;
+use Drupal\social_auth\Event\SocialAuthUserFieldsEvent;
 use Drupal\user\Entity\User;
 use Drupal\user\UserInterface;
 use Drupal\Core\Config\ConfigFactoryInterface;
 use Drupal\Core\Logger\LoggerChannelFactoryInterface;
 use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\Core\Entity\EntityStorageException;
+use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 
 /**
  * Contains all logic that is related to Drupal user management.
  */
 class SocialAuthUserManager {
+  use StringTranslationTrait;
 
   protected $configFactory;
   protected $loggerFactory;
+  protected $eventDispatcher;
   protected $entityTypeManager;
 
   /**
@@ -25,13 +32,16 @@ class SocialAuthUserManager {
    *   Used for accessing Drupal configuration.
    * @param \Drupal\Core\Logger\LoggerChannelFactoryInterface $logger_factory
    *   Used for logging errors.
+   * @param \Symfony\Component\EventDispatcher\EventDispatcherInterface $event_dispatcher
+   *   Used for dispatching events to other modules.
    * @param \Drupal\Core\Entity\EntityTypeManagerInterface $entity_type_manager
    *   Used for loading and creating Drupal user objects.
    */
-  public function __construct(ConfigFactoryInterface $config_factory, LoggerChannelFactoryInterface $logger_factory, EntityTypeManagerInterface $entity_type_manager) {
-    $this->configFactory      = $config_factory;
-    $this->loggerFactory      = $logger_factory;
-    $this->entityTypeManager  = $entity_type_manager;
+  public function __construct(ConfigFactoryInterface $config_factory, LoggerChannelFactoryInterface $logger_factory, EventDispatcherInterface $event_dispatcher, EntityTypeManagerInterface $entity_type_manager) {
+    $this->configFactory = $config_factory;
+    $this->loggerFactory = $logger_factory;
+    $this->eventDispatcher = $event_dispatcher;
+    $this->entityTypeManager = $entity_type_manager;
   }
 
   /**
@@ -70,42 +80,36 @@ class SocialAuthUserManager {
    *   User's name on Facebook.
    * @param string $email
    *   User's email address.
+   * @param string $plugin_id
+   *   Plugin ID creating the user.
    *
    * @return \Drupal\user\Entity\User|false
    *   Drupal user account if user was created
    *   False otherwise
    */
-  public function createUser($name, $email) {
+  public function createUser($name, $email, $plugin_id = 'social_auth') {
     // Make sure we have everything we need.
     if (!$name || !$email) {
       $this->loggerFactory
-        ->get('social_auth')
+        ->get($plugin_id)
         ->error('Failed to create user. Name: @name, email: @email', array('@name' => $name, '@email' => $email));
       return FALSE;
     }
 
     // Check if site configuration allows new users to register.
     if ($this->registrationBlocked()) {
-
       $this->loggerFactory
-        ->get('social_auth')
+        ->get($plugin_id)
         ->warning('Failed to create user. User registration is disabled in Drupal account settings. Name: @name, email: @email.', array('@name' => $name, '@email' => $email));
 
       return FALSE;
     }
 
-    // Set up the user fields.
-    // - Username will be user's name on Facebook.
-    // - Password can be very long since the user doesn't see this.
-    $fields = array(
-      'name' => $this->generateUniqueUsername($name),
-      'mail' => $email,
-      'init' => $email,
-      'pass' => $this->userPassword(32),
-      'status' => $this->getNewUserStatus(),
-    );
+    // Initializes the user fields.
+    $fields = $this->getUserFields($name, $email, $plugin_id);
 
     // Create new user account.
+    /** @var \Drupal\user\Entity\User $new_user */
     $new_user = $this->entityTypeManager
       ->getStorage('user')
       ->create($fields);
@@ -115,15 +119,18 @@ class SocialAuthUserManager {
       $new_user->save();
 
       $this->loggerFactory
-        ->get('social_auth')
+        ->get($plugin_id)
         ->notice('New user created. Username @username, UID: @uid', array('@username' => $new_user->getAccountName(), '@uid' => $new_user->id()));
+
+      // Dipatches SocialAuthEvents::USER_CREATED event.
+      $event = new SocialAuthUserEvent($new_user, $plugin_id);
+      $this->eventDispatcher->dispatch(SocialAuthEvents::USER_CREATED, $event);
 
       return $new_user;
     }
-
     catch (EntityStorageException $ex) {
       $this->loggerFactory
-        ->get('social_auth')
+        ->get($plugin_id)
         ->error('Could not create new user. Exception: @message', array('@message' => $ex->getMessage()));
     }
 
@@ -140,18 +147,22 @@ class SocialAuthUserManager {
    *   True if login was successful
    *   False if the login was blocked
    */
-  public function loginUser(User $drupal_user) {
-
+  public function loginUser(User $drupal_user, $plugin_id) {
     // Check that the account is active and log the user in.
     if ($drupal_user->isActive()) {
       $this->userLoginFinalize($drupal_user);
+
+      // Dipatches SocialAuthEvents::USER_LOGIN event.
+      $event = new SocialAuthUserEvent($drupal_user, $plugin_id);
+      $this->eventDispatcher->dispatch(SocialAuthEvents::USER_LOGIN, $event);
 
       return TRUE;
     }
 
     $this->loggerFactory
-      ->get('social_auth')
+      ->get($plugin_id)
       ->warning('Login for user @user prevented. Account is blocked.', array('@user' => $drupal_user->getAccountName()));
+
     return FALSE;
   }
 
@@ -245,6 +256,36 @@ class SocialAuthUserManager {
    */
   protected function userLoginFinalize(UserInterface $account) {
     user_login_finalize($account);
+  }
+
+  /**
+   * Returns an array of fields to initialize the creation of the user.
+   *
+   * @param string $name
+   *   User's name on Facebook.
+   * @param string $email
+   *   User's email address.
+   *
+   * @return array
+   *   Fields to initialize for the user creation.
+   */
+  protected function getUserFields($name, $email, $plugin_id) {
+    // - Password can be very long since the user doesn't see this.
+    $fields = [
+      'name' => $this->generateUniqueUsername($name),
+      'mail' => $email,
+      'init' => $email,
+      'pass' => $this->userPassword(32),
+      'status' => $this->getNewUserStatus(),
+    ];
+
+    // Dispatches SocialAuthEvents::USER_FIELDS, so that other modules can
+    // update this array before an user is saved.
+    $event = new SocialAuthUserFieldsEvent($fields, $plugin_id);
+    $this->eventDispatcher->dispatch(SocialAuthEvents::USER_FIELDS, $event);
+    $fields = $event->getUserFields();
+
+    return $fields;
   }
 
 }
