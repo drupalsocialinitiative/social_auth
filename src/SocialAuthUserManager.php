@@ -147,7 +147,7 @@ class SocialAuthUserManager {
    *   True if login was successful
    *   False if the login was blocked
    */
-  public function loginUser(User $drupal_user, $plugin_id) {
+  public function loginUser(User $drupal_user, $plugin_id = 'social_auth') {
     // Check that the account is active and log the user in.
     if ($drupal_user->isActive()) {
       $this->userLoginFinalize($drupal_user);
@@ -269,7 +269,7 @@ class SocialAuthUserManager {
    * @return array
    *   Fields to initialize for the user creation.
    */
-  protected function getUserFields($name, $email, $plugin_id) {
+  protected function getUserFields($name, $email, $plugin_id = 'social_auth') {
     // - Password can be very long since the user doesn't see this.
     $fields = [
       'name' => $this->generateUniqueUsername($name),
