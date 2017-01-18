@@ -36,7 +36,7 @@ class SocialAuthUserEvent extends Event {
    */
   public function __construct(User $user, $plugin_id) {
     $this->user = $user;
-    $this->plugin_id = $pluginId;
+    $this->pluginId = $plugin_id;
   }
 
   /**
