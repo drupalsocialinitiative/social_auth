@@ -7,3 +7,7 @@ services:
       - '@event_dispatcher'
       - '@entity_type.manager'
       - '@entity_field.manager'
+      - '@token'
+      - '@string_translation'
+      - '@transliteration'
+      - '@language_manager'
