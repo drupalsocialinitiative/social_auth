@@ -1,0 +1,19 @@
+<?php
+
+/**
+ * @file
+ * Install, update and uninstall functions for Social Auth.
+ */
+
+/**
+ * Implements hook_update_N().
+ */
+function social_auth_update_8001(&$sandbox) {
+  $config = \Drupal::service('config.factory')->getEditable('social_auth.settings');
+  // Set and save new message value.
+  $config->set('post_login_path', 'user')
+    ->set('redirect_user_form', FALSE)
+    ->set('disable_admin_login', TRUE)
+    ->set('disabled_roles', array())
+    ->save();
+}

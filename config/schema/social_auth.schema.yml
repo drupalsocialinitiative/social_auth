@@ -1,0 +1,16 @@
+social_auth.settings:
+  type: config_object
+  label: 'Social Auth Config'
+  mapping:
+    post_login_path:
+      type: string
+      label: 'Drupal path where the user should be redirected after successful login.'
+    redirect_user_form:
+      type: boolean
+      label: 'Redirects to Drupal user form after the user is created if checked.'
+    disable_admin_login:
+      type: boolean
+      label: 'Allows to Disable Social Auth login for administrator'
+    disabled_roles:
+      type: array
+      label: 'Roles for which Social Auth Login is disabled'
