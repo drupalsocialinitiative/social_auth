@@ -126,7 +126,8 @@ class SocialAuthUserManager {
         ->get($plugin_id)
         ->warning('Failed to create user. User registration is disabled in Drupal account settings. Name: @name, email: @email.', array('@name' => $name, '@email' => $email));
 
-      $this->drupalSetMessage($this->t('Only existing users can log in with Facebook. Contact system administrator.'), 'error');
+      drupal_set_message($this->t('Only existing users can log in. Contact system administrator.'), 'error');
+
       return FALSE;
     }
 
@@ -146,7 +147,7 @@ class SocialAuthUserManager {
     $violations = $new_user->validate();
     if (count($violations) > 0) {
       $msg = $violations[0]->getMessage();
-      $this->drupalSetMessage($this->t('Creation of user account failed: @message', array('@message' => $msg)), 'error');
+      drupal_set_message($this->t('Creation of user account failed: @message', array('@message' => $msg)), 'error');
       $this->loggerFactory
         ->get($plugin_id)
         ->error('Could not create new user: @message', array('@message' => $msg));
