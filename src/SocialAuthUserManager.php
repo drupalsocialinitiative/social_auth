@@ -10,6 +10,7 @@ use Drupal\Core\Entity\EntityStorageException;
 use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\Core\Language\LanguageManagerInterface;
 use Drupal\Core\Logger\LoggerChannelFactoryInterface;
+use Drupal\Core\Routing\UrlGeneratorTrait;
 use Drupal\Core\StringTranslation\StringTranslationTrait;
 use Drupal\Core\StringTranslation\TranslationInterface;
 use Drupal\Core\Transliteration\PhpTransliteration;
@@ -24,6 +25,7 @@ use Drupal\user\UserInterface;
  * Contains all logic that is related to Drupal user management.
  */
 class SocialAuthUserManager {
+  use UrlGeneratorTrait;
   use StringTranslationTrait;
 
   protected $configFactory;
@@ -35,6 +37,13 @@ class SocialAuthUserManager {
   protected $stringTranslation;
   protected $transliteration;
   protected $languageManager;
+
+  /**
+   * The implementer plugin id.
+   *
+   * @var string
+   */
+  protected $pluginId;
 
   /**
    * Constructor.
@@ -66,6 +75,87 @@ class SocialAuthUserManager {
     $this->stringTranslation  = $string_translation;
     $this->transliteration    = $transliteration;
     $this->languageManager    = $language_manager;
+
+    // Sets default plugin id.
+    $this->setPluginId('social_auth');
+  }
+
+  /**
+   * Creates and/or authenticates an user.
+   *
+   * @param string $email
+   *   The user's email address.
+   * @param string $name
+   *   The user's name.
+   * @param string $id
+   *   The user's id in provider.
+   * @param string $picture_url
+   *   The user's picture.
+   *
+   * @return \Symfony\Component\HttpFoundation\RedirectResponse
+   *   A redirect response to user page or login.
+   */
+  public function authenticateUser($email, $name, $id = NULL, $picture_url = FALSE) {
+    // Tries to load the user by their email.
+    $drupal_user = $this->loadUserByProperty('mail', $email);
+    // If user email has already an account in the site.
+    if ($drupal_user) {
+      // If user could be logged in.
+      if ($this->loginUser($drupal_user)) {
+        return $this->redirect('user.page');
+      }
+      else {
+        drupal_set_message($this->t("Your account has not been approved yet or might have been canceled, please contact the administrator"), 'error');
+        return $this->redirect('user.login');
+      }
+    }
+
+    $drupal_user = $this->createUser($name, $email);
+    // If the new user could be registered.
+    if ($drupal_user) {
+      // Download profile picture for the newly created user.
+      if ($picture_url) {
+        $this->setProfilePic($drupal_user, $picture_url, $id);
+      }
+      // If the account needs admin approval.
+      if ($this->isApprovalRequired()) {
+        drupal_set_message($this->t("Your account was created, but it needs administrator's approval"), 'warning');
+        return $this->redirect('user.login');
+      }
+      // If the new user could be logged in.
+      if ($this->loginUser($drupal_user)) {
+        return $this->redirect('user.page');
+      }
+    }
+
+    drupal_set_message($this->t('You could not be authenticated, please contact the administrator'), 'error');
+    return $this->redirect('user.login');
+  }
+
+  /**
+   * Sets the implementer plugin id.
+   *
+   * This value is used to generate customized logs, drupal messages, and event
+   * dispatchers.
+   *
+   * @param string $plugin_id
+   *   The plugin id.
+   */
+  public function setPluginId($plugin_id) {
+    $this->pluginId = $plugin_id;
+  }
+
+  /**
+   * Gets the implementer plugin id.
+   *
+   * This value is used to generate customized logs, drupal messages, and events
+   * dispatchers.
+   *
+   * @return string
+   *   The plugin id.
+   */
+  public function getPluginId() {
+    return $this->pluginId;
   }
 
   /**
@@ -104,18 +194,16 @@ class SocialAuthUserManager {
    *   User's name on Provider.
    * @param string $email
    *   User's email address.
-   * @param string $plugin_id
-   *   Plugin ID creating the user.
    *
    * @return \Drupal\user\Entity\User|false
    *   Drupal user account if user was created
    *   False otherwise
    */
-  public function createUser($name, $email, $plugin_id = 'social_auth') {
+  public function createUser($name, $email) {
     // Make sure we have everything we need.
     if (!$name || !$email) {
       $this->loggerFactory
-        ->get($plugin_id)
+        ->get($this->getPluginId())
         ->error('Failed to create user. Name: @name, email: @email', array('@name' => $name, '@email' => $email));
       return FALSE;
     }
@@ -123,7 +211,7 @@ class SocialAuthUserManager {
     // Check if site configuration allows new users to register.
     if ($this->registrationBlocked()) {
       $this->loggerFactory
-        ->get($plugin_id)
+        ->get($this->getPluginId())
         ->warning('Failed to create user. User registration is disabled in Drupal account settings. Name: @name, email: @email.', array('@name' => $name, '@email' => $email));
 
       drupal_set_message($this->t('Only existing users can log in. Contact system administrator.'), 'error');
@@ -135,7 +223,7 @@ class SocialAuthUserManager {
     $langcode = $this->languageManager->getCurrentLanguage()->getId();
 
     // Initializes the user fields.
-    $fields = $this->getUserFields($name, $email, $langcode, $plugin_id);
+    $fields = $this->getUserFields($name, $email, $langcode);
 
     // Create new user account.
     /** @var \Drupal\user\Entity\User $new_user */
@@ -149,7 +237,7 @@ class SocialAuthUserManager {
       $msg = $violations[0]->getMessage();
       drupal_set_message($this->t('Creation of user account failed: @message', array('@message' => $msg)), 'error');
       $this->loggerFactory
-        ->get($plugin_id)
+        ->get($this->getPluginId())
         ->error('Could not create new user: @message', array('@message' => $msg));
       return FALSE;
     }
@@ -159,21 +247,21 @@ class SocialAuthUserManager {
       $new_user->save();
 
       $this->loggerFactory
-        ->get($plugin_id)
+        ->get($this->getPluginId())
         ->notice('New user created. Username @username, UID: @uid', [
           '@username' => $new_user->getAccountName(),
           '@uid' => $new_user->id(),
         ]);
 
       // Dipatches SocialAuthEvents::USER_CREATED event.
-      $event = new SocialAuthUserEvent($new_user, $plugin_id);
+      $event = new SocialAuthUserEvent($new_user, $this->getPluginId());
       $this->eventDispatcher->dispatch(SocialAuthEvents::USER_CREATED, $event);
 
       return $new_user;
     }
     catch (EntityStorageException $ex) {
       $this->loggerFactory
-        ->get($plugin_id)
+        ->get($this->getPluginId())
         ->error('Could not create new user. Exception: @message', ['@message' => $ex->getMessage()]);
     }
 
@@ -190,20 +278,20 @@ class SocialAuthUserManager {
    *   True if login was successful
    *   False if the login was blocked
    */
-  public function loginUser(User $drupal_user, $plugin_id = 'social_auth') {
+  public function loginUser(User $drupal_user) {
     // Check that the account is active and log the user in.
     if ($drupal_user->isActive()) {
       $this->userLoginFinalize($drupal_user);
 
       // Dipatches SocialAuthEvents::USER_LOGIN event.
-      $event = new SocialAuthUserEvent($drupal_user, $plugin_id);
+      $event = new SocialAuthUserEvent($drupal_user, $this->getPluginId());
       $this->eventDispatcher->dispatch(SocialAuthEvents::USER_LOGIN, $event);
 
       return TRUE;
     }
 
     $this->loggerFactory
-      ->get($plugin_id)
+      ->get($this->getPluginId())
       ->warning('Login for user @user prevented. Account is blocked.', array('@user' => $drupal_user->getAccountName()));
 
     return FALSE;
@@ -221,6 +309,23 @@ class SocialAuthUserManager {
     if ($this->configFactory
       ->get('user.settings')
       ->get('register') == 'admin_only') {
+      return TRUE;
+    }
+
+    return FALSE;
+  }
+
+  /**
+   * Checks if admin approval is required for new users.
+   *
+   * @return bool
+   *   True if approval is required
+   *   False if approval is not required
+   */
+  protected function isApprovalRequired() {
+    if ($this->configFactory
+      ->get('user.settings')
+      ->get('register') == 'visitors_admin_approval') {
       return TRUE;
     }
 
@@ -289,17 +394,15 @@ class SocialAuthUserManager {
    *   Absolute URL where the picture will be downloaded from.
    * @param string $id
    *   User's ID.
-   * @param string $plugin_id
-   *   Social Auth plugin id.
    *
    * @return bool
    *   True if picture was successfully set.
    *   False otherwise.
    */
-  public function setProfilePic(User $drupal_user, $picture_url, $id, $plugin_id = 'social_auth') {
+  public function setProfilePic(User $drupal_user, $picture_url, $id) {
     // Try to download the profile picture and add it to user fields.
     if ($this->userPictureEnabled()) {
-      if ($file = $this->downloadProfilePic($picture_url, $id, $plugin_id)) {
+      if ($file = $this->downloadProfilePic($picture_url, $id)) {
         $drupal_user->set('user_picture', $file->id());
         $drupal_user->save();
         return TRUE;
@@ -315,16 +418,14 @@ class SocialAuthUserManager {
    *   Absolute URL where to download the profile picture.
    * @param string $id
    *   Social network ID of the user.
-   * @param string $plugin_id
-   *   Social Auth plugin id.
    *
    * @return \Drupal\file\FileInterface|false
    *   FileInterface object if file was succesfully downloaded
    *   False otherwise
    */
-  protected function downloadProfilePic($picture_url, $id, $plugin_id = 'social_auth') {
+  protected function downloadProfilePic($picture_url, $id) {
     // Make sure that we have everything we need.
-    if (!$picture_url || !$id || !$plugin_id) {
+    if (!$picture_url || !$id) {
       return FALSE;
     }
 
@@ -345,26 +446,26 @@ class SocialAuthUserManager {
 
     if (!$this->filePrepareDirectory($directory, 1)) {
       $this->loggerFactory
-        ->get($plugin_id)
+        ->get($this->getPluginId())
         ->error('Could not save @plugin_id\'s provider profile picture. Directory is not writable: @directory', [
           '@directory' => $directory,
-          '@provider' => $plugin_id,
+          '@provider' => $this->getPluginId(),
         ]);
       return FALSE;
     }
 
     // Generate filename and transliterate.
-    $filename = $this->transliteration->transliterate($plugin_id . '_' . $id . '.jpg', 'en', '_', 50);
+    $filename = $this->transliteration->transliterate($this->getPluginId() . '_' . $id . '.jpg', 'en', '_', 50);
 
     $destination = $directory . DIRECTORY_SEPARATOR . $filename;
 
     // Download the picture to local filesystem.
     if (!$file = $this->systemRetrieveFile($picture_url, $destination, TRUE, 1)) {
       $this->loggerFactory
-        ->get($plugin_id)
+        ->get($this->getPluginId())
         ->error('Could not download @plugin_id\'s provider profile picture from url: @url', [
           '@url' => $picture_url,
-          '@plugin_id' => $plugin_id,
+          '@plugin_id' => $this->getPluginId(),
         ]);
 
       return FALSE;
@@ -470,13 +571,11 @@ class SocialAuthUserManager {
    *   User's email address.
    * @param string $langcode
    *   The current UI language.
-   * @param string $plugin_id
-   *   The plugin id.
    *
    * @return array
    *   Fields to initialize for the user creation.
    */
-  protected function getUserFields($name, $email, $langcode, $plugin_id = 'social_auth') {
+  protected function getUserFields($name, $email, $langcode) {
     // - Password can be very long since the user doesn't see this.
     $fields = [
       'name' => $this->generateUniqueUsername($name),
@@ -491,7 +590,7 @@ class SocialAuthUserManager {
 
     // Dispatches SocialAuthEvents::USER_FIELDS, so that other modules can
     // update this array before an user is saved.
-    $event = new SocialAuthUserFieldsEvent($fields, $plugin_id);
+    $event = new SocialAuthUserFieldsEvent($fields, $this->getPluginId());
     $this->eventDispatcher->dispatch(SocialAuthEvents::USER_FIELDS, $event);
     $fields = $event->getUserFields();
 
