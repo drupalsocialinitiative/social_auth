@@ -3,6 +3,8 @@
 namespace Drupal\social_auth;
 
 use Symfony\Component\EventDispatcher\EventDispatcherInterface;
+use Symfony\Component\HttpFoundation\RedirectResponse;
+use Drupal\Core\Url;
 use Drupal\Component\Utility\Unicode;
 use Drupal\Core\Config\ConfigFactoryInterface;
 use Drupal\Core\Entity\EntityFieldManagerInterface;
@@ -10,6 +12,7 @@ use Drupal\Core\Entity\EntityStorageException;
 use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\Core\Language\LanguageManagerInterface;
 use Drupal\Core\Logger\LoggerChannelFactoryInterface;
+use Drupal\Core\Routing\RouteProviderInterface;
 use Drupal\Core\Routing\UrlGeneratorTrait;
 use Drupal\Core\StringTranslation\StringTranslationTrait;
 use Drupal\Core\StringTranslation\TranslationInterface;
@@ -37,7 +40,7 @@ class SocialAuthUserManager {
   protected $stringTranslation;
   protected $transliteration;
   protected $languageManager;
-
+  protected $routeProvider;
   /**
    * The implementer plugin id.
    *
@@ -64,8 +67,10 @@ class SocialAuthUserManager {
    *   Used for translating strings in UI messages.
    * @param \Drupal\Core\Transliteration\PhpTransliteration $transliteration
    *   Used for user picture directory and file transliteration.
+   * @param \Drupal\Core\Routing\RouteProviderInterface $route_provider
+   *   Used to check if route path exists.
    */
-  public function __construct(ConfigFactoryInterface $config_factory, LoggerChannelFactoryInterface $logger_factory, EventDispatcherInterface $event_dispatcher, EntityTypeManagerInterface $entity_type_manager, EntityFieldManagerInterface $entity_field_manager, Token $token, TranslationInterface $string_translation, PhpTransliteration $transliteration, LanguageManagerInterface $language_manager) {
+  public function __construct(ConfigFactoryInterface $config_factory, LoggerChannelFactoryInterface $logger_factory, EventDispatcherInterface $event_dispatcher, EntityTypeManagerInterface $entity_type_manager, EntityFieldManagerInterface $entity_field_manager, Token $token, TranslationInterface $string_translation, PhpTransliteration $transliteration, LanguageManagerInterface $language_manager, RouteProviderInterface $route_provider) {
     $this->configFactory      = $config_factory;
     $this->loggerFactory      = $logger_factory;
     $this->eventDispatcher    = $event_dispatcher;
@@ -75,61 +80,9 @@ class SocialAuthUserManager {
     $this->stringTranslation  = $string_translation;
     $this->transliteration    = $transliteration;
     $this->languageManager    = $language_manager;
-
+    $this->routeProvider      = $route_provider;
     // Sets default plugin id.
     $this->setPluginId('social_auth');
-  }
-
-  /**
-   * Creates and/or authenticates an user.
-   *
-   * @param string $email
-   *   The user's email address.
-   * @param string $name
-   *   The user's name.
-   * @param string $id
-   *   The user's id in provider.
-   * @param string $picture_url
-   *   The user's picture.
-   *
-   * @return \Symfony\Component\HttpFoundation\RedirectResponse
-   *   A redirect response to user page or login.
-   */
-  public function authenticateUser($email, $name, $id = NULL, $picture_url = FALSE) {
-    // Tries to load the user by their email.
-    $drupal_user = $this->loadUserByProperty('mail', $email);
-    // If user email has already an account in the site.
-    if ($drupal_user) {
-      // If user could be logged in.
-      if ($this->loginUser($drupal_user)) {
-        return $this->redirect('user.page');
-      }
-      else {
-        drupal_set_message($this->t("Your account has not been approved yet or might have been canceled, please contact the administrator"), 'error');
-        return $this->redirect('user.login');
-      }
-    }
-
-    $drupal_user = $this->createUser($name, $email);
-    // If the new user could be registered.
-    if ($drupal_user) {
-      // Download profile picture for the newly created user.
-      if ($picture_url) {
-        $this->setProfilePic($drupal_user, $picture_url, $id);
-      }
-      // If the account needs admin approval.
-      if ($this->isApprovalRequired()) {
-        drupal_set_message($this->t("Your account was created, but it needs administrator's approval"), 'warning');
-        return $this->redirect('user.login');
-      }
-      // If the new user could be logged in.
-      if ($this->loginUser($drupal_user)) {
-        return $this->redirect('user.page');
-      }
-    }
-
-    drupal_set_message($this->t('You could not be authenticated, please contact the administrator'), 'error');
-    return $this->redirect('user.login');
   }
 
   /**
@@ -156,6 +109,108 @@ class SocialAuthUserManager {
    */
   public function getPluginId() {
     return $this->pluginId;
+  }
+
+  /**
+   * Creates and/or authenticates an user.
+   *
+   * @param string $email
+   *   The user's email address.
+   * @param string $name
+   *   The user's name.
+   * @param string $id
+   *   The user's id in provider.
+   * @param string $picture_url
+   *   The user's picture.
+   *
+   * @return \Symfony\Component\HttpFoundation\RedirectResponse
+   *   A redirect response.
+   */
+  public function authenticateUser($email, $name, $id = NULL, $picture_url = FALSE) {
+    // Tries to load the user by their email.
+    $drupal_user = $this->loadUserByProperty('mail', $email);
+    // If user email has already an account in the site.
+    if ($drupal_user) {
+      // Authenticates and redirect existing user.
+      return $this->authenticateExistingUser($drupal_user);
+    }
+
+    $drupal_user = $this->createUser($name, $email);
+    // If the new user could be registered.
+    if ($drupal_user) {
+      // Download profile picture for the newly created user.
+      if ($picture_url) {
+        $this->setProfilePic($drupal_user, $picture_url, $id);
+      }
+      // Authenticates and redirect new user.
+      return $this->authenticateNewUser($drupal_user);
+    }
+
+    drupal_set_message($this->t('You could not be authenticated, please contact the administrator'), 'error');
+    return $this->redirect('user.login');
+  }
+
+  /**
+   * Authenticates and redirects existing users in authentication process.
+   *
+   * @param \Drupal\user\UserInterface $drupal_user
+   *   User object to authenticate.
+   *
+   * @return \Symfony\Component\HttpFoundation\RedirectResponse
+   *   A redirect response.
+   */
+  public function authenticateExistingUser(UserInterface $drupal_user) {
+    // If Admin (user 1) can not authenticate.
+    if ($this->isAdminDisabled($drupal_user)) {
+      drupal_set_message($this->t('Authentication for Admin (user 1) is disabled.'), 'error');
+      return $this->redirect('user.login');
+    }
+
+    // If user can not login because of their role.
+    $disabled_role = $this->isUserRoleDisabled($drupal_user);
+    if ($disabled_role) {
+      drupal_set_message($this->t("Authentication for '@role' role is disabled.", array('@role' => $disabled_role)), 'error');
+      return $this->redirect('user.login');
+    }
+
+    // If user could be logged in.
+    if ($this->loginUser($drupal_user)) {
+      return $this->getLoginPostPath();
+    }
+    else {
+      drupal_set_message($this->t("Your account has not been approved yet or might have been canceled, please contact the administrator"), 'error');
+      return $this->redirect('user.login');
+    }
+  }
+
+  /**
+   * Authenticates and redirects new users in authentication process.
+   *
+   * @param \Drupal\user\UserInterface $drupal_user
+   *   User object to login.
+   *
+   * @return \Symfony\Component\HttpFoundation\RedirectResponse
+   *   A redirect response.
+   */
+  public function authenticateNewUser(UserInterface $drupal_user) {
+    // If the account needs admin approval.
+    if ($this->isApprovalRequired()) {
+      drupal_set_message($this->t("Your account was created, but it needs administrator's approval"), 'warning');
+      return $this->redirect('user.login');
+    }
+
+    // If the new user could be logged in.
+    if ($this->loginUser($drupal_user)) {
+      // User form redirection or false if option is not enabled.
+      $redirect = $this->redirectToUserForm($drupal_user);
+
+      if ($redirect) {
+        return $redirect;
+      }
+      else {
+        return $this->getLoginPostPath();
+      }
+    }
   }
 
   /**
@@ -306,9 +361,7 @@ class SocialAuthUserManager {
    */
   protected function registrationBlocked() {
     // Check if Drupal account registration settings is Administrators only.
-    if ($this->configFactory
-      ->get('user.settings')
-      ->get('register') == 'admin_only') {
+    if ($this->configFactory->get('user.settings')->get('register') == 'admin_only') {
       return TRUE;
     }
 
@@ -323,12 +376,87 @@ class SocialAuthUserManager {
    *   False if approval is not required
    */
   protected function isApprovalRequired() {
-    if ($this->configFactory
-      ->get('user.settings')
-      ->get('register') == 'visitors_admin_approval') {
+    if ($this->configFactory->get('user.settings')->get('register') == 'visitors_admin_approval') {
       return TRUE;
     }
 
+    return FALSE;
+  }
+
+  /**
+   * Checks if Admin (user 1) can login.
+   *
+   * @param \Drupal\user\UserInterface $drupal_user
+   *   User object to check if user is admin.
+   *
+   * @return bool
+   *   True if user 1 can't login.
+   *   False otherwise
+   */
+  protected function isAdminDisabled(UserInterface $drupal_user) {
+    if ($this->configFactory->get('social_auth.settings')->get('disable_admin_login')
+      && $drupal_user->id() == 1) {
+
+      return TRUE;
+    }
+
+    return FALSE;
+  }
+
+  /**
+   * Checks if User with specific roles is allowed to login.
+   *
+   * @param \Drupal\user\UserInterface $drupal_user
+   *   User object to check if user has a specific role.
+   *
+   * @return string|false
+   *   The role that can't login.
+   *   False if the user roles are not disabled.
+   */
+  protected function isUserRoleDisabled(UserInterface $drupal_user) {
+    foreach ($this->configFactory->get('social_auth.settings')->get('disabled_roles') as $role) {
+      if ($drupal_user->hasRole($role)) {
+        return $role;
+      }
+    }
+
+    return FALSE;
+  }
+
+  /**
+   * Returns the Post Login Path.
+   *
+   * @return string
+   *   Post Login Path to which the user would be redirected after login.
+   */
+  protected function getLoginPostPath() {
+    $post_login = $this->configFactory->get('social_auth.settings')->get('post_login');
+    $routes = $this->routeProvider->getRoutesByNames(array($post_login));
+    if (empty($routes)) {
+      // Route does not exist so just redirect to path.
+      return new RedirectResponse(Url::fromUserInput($post_login)->toString());
+    }
+    else {
+      return $this->redirect($post_login);
+    }
+  }
+
+  /**
+   * Checks if User should be redirected to User Form after creation.
+   *
+   * @param \Drupal\user\UserInterface $drupal_user
+   *   User object to get the id of user.
+   *
+   * @return \Symfony\Component\HttpFoundation\RedirectResponse|false
+   *   A redirect response to user form, if option is enabled.
+   *   False otherwise
+   */
+  protected function redirectToUserForm(UserInterface $drupal_user) {
+    if ($this->configFactory->get('social_auth.settings')->get('redirect_user_form')) {
+      return $this->redirect('entity.user.edit_form', [
+        'user' => $drupal_user->id(),
+      ]);
+    }
     return FALSE;
   }
 
