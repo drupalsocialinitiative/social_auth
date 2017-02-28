@@ -269,7 +269,7 @@ class SocialAuthUserManager {
         ->get($this->getPluginId())
         ->warning('Failed to create user. User registration is disabled in Drupal account settings. Name: @name, email: @email.', array('@name' => $name, '@email' => $email));
 
-      drupal_set_message($this->t('Only existing users can log in. Contact system administrator.'), 'error');
+      drupal_set_message($this->t('User registration is disabled, please contact the administrator.'), 'error');
 
       return FALSE;
     }
