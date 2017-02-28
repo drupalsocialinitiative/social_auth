@@ -8,7 +8,6 @@ services:
       - '@entity_type.manager'
       - '@entity_field.manager'
       - '@token'
-      - '@string_translation'
       - '@transliteration'
       - '@language_manager'
       - '@router.route_provider'

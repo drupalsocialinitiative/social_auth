@@ -15,7 +15,6 @@ use Drupal\Core\Logger\LoggerChannelFactoryInterface;
 use Drupal\Core\Routing\RouteProviderInterface;
 use Drupal\Core\Routing\UrlGeneratorTrait;
 use Drupal\Core\StringTranslation\StringTranslationTrait;
-use Drupal\Core\StringTranslation\TranslationInterface;
 use Drupal\Core\Transliteration\PhpTransliteration;
 use Drupal\Core\Utility\Token;
 use Drupal\social_auth\Event\SocialAuthEvents;
@@ -37,7 +36,6 @@ class SocialAuthUserManager {
   protected $entityTypeManager;
   protected $entityFieldManager;
   protected $token;
-  protected $stringTranslation;
   protected $transliteration;
   protected $languageManager;
   protected $routeProvider;
@@ -63,21 +61,18 @@ class SocialAuthUserManager {
    *   Used for access Drupal user field definitions.
    * @param \Drupal\Core\Utility\Token $token
    *   Used for token support in Drupal user picture directory.
-   * @param \Drupal\Core\StringTranslation\TranslationInterface $string_translation
-   *   Used for translating strings in UI messages.
    * @param \Drupal\Core\Transliteration\PhpTransliteration $transliteration
    *   Used for user picture directory and file transliteration.
    * @param \Drupal\Core\Routing\RouteProviderInterface $route_provider
    *   Used to check if route path exists.
    */
-  public function __construct(ConfigFactoryInterface $config_factory, LoggerChannelFactoryInterface $logger_factory, EventDispatcherInterface $event_dispatcher, EntityTypeManagerInterface $entity_type_manager, EntityFieldManagerInterface $entity_field_manager, Token $token, TranslationInterface $string_translation, PhpTransliteration $transliteration, LanguageManagerInterface $language_manager, RouteProviderInterface $route_provider) {
+  public function __construct(ConfigFactoryInterface $config_factory, LoggerChannelFactoryInterface $logger_factory, EventDispatcherInterface $event_dispatcher, EntityTypeManagerInterface $entity_type_manager, EntityFieldManagerInterface $entity_field_manager, Token $token, PhpTransliteration $transliteration, LanguageManagerInterface $language_manager, RouteProviderInterface $route_provider) {
     $this->configFactory      = $config_factory;
     $this->loggerFactory      = $logger_factory;
     $this->eventDispatcher    = $event_dispatcher;
     $this->entityTypeManager  = $entity_type_manager;
     $this->entityFieldManager = $entity_field_manager;
     $this->token              = $token;
-    $this->stringTranslation  = $string_translation;
     $this->transliteration    = $transliteration;
     $this->languageManager    = $language_manager;
     $this->routeProvider      = $route_provider;
