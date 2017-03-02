@@ -11,3 +11,4 @@ services:
       - '@transliteration'
       - '@language_manager'
       - '@router.route_provider'
+      - '@session'
