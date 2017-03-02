@@ -23,6 +23,7 @@ use Drupal\social_auth\Event\SocialAuthUserEvent;
 use Drupal\social_auth\Event\SocialAuthUserFieldsEvent;
 use Drupal\user\Entity\User;
 use Drupal\user\UserInterface;
+use Symfony\Component\HttpFoundation\Session\SessionInterface;
 
 /**
  * Contains all logic that is related to Drupal user management.
@@ -41,12 +42,27 @@ class SocialAuthUserManager {
   protected $transliteration;
   protected $languageManager;
   protected $routeProvider;
+
   /**
    * The implementer plugin id.
    *
    * @var string
    */
   protected $pluginId;
+
+  /**
+   * The session manager.
+   *
+   * @var \Symfony\Component\HttpFoundation\Session\SessionInterface
+   */
+  protected $session;
+
+  /**
+   * Session keys to nullify is user could not be logged in.
+   *
+   * @var array
+   */
+  protected $sessionKeys;
 
   /**
    * Constructor.
@@ -69,8 +85,10 @@ class SocialAuthUserManager {
    *   Used for user picture directory and file transliteration.
    * @param \Drupal\Core\Routing\RouteProviderInterface $route_provider
    *   Used to check if route path exists.
+   * @param SessionInterface $session
+   *   Used for reading data from and writing data to session.
    */
-  public function __construct(ConfigFactoryInterface $config_factory, LoggerChannelFactoryInterface $logger_factory, EventDispatcherInterface $event_dispatcher, EntityTypeManagerInterface $entity_type_manager, EntityFieldManagerInterface $entity_field_manager, Token $token, TranslationInterface $string_translation, PhpTransliteration $transliteration, LanguageManagerInterface $language_manager, RouteProviderInterface $route_provider) {
+  public function __construct(ConfigFactoryInterface $config_factory, LoggerChannelFactoryInterface $logger_factory, EventDispatcherInterface $event_dispatcher, EntityTypeManagerInterface $entity_type_manager, EntityFieldManagerInterface $entity_field_manager, Token $token, TranslationInterface $string_translation, PhpTransliteration $transliteration, LanguageManagerInterface $language_manager, RouteProviderInterface $route_provider, SessionInterface $session) {
     $this->configFactory      = $config_factory;
     $this->loggerFactory      = $logger_factory;
     $this->eventDispatcher    = $event_dispatcher;
@@ -81,6 +99,7 @@ class SocialAuthUserManager {
     $this->transliteration    = $transliteration;
     $this->languageManager    = $language_manager;
     $this->routeProvider      = $route_provider;
+    $this->session            = $session;
     // Sets default plugin id.
     $this->setPluginId('social_auth');
   }
@@ -112,6 +131,16 @@ class SocialAuthUserManager {
   }
 
   /**
+   * Sets the session keys to nullify if user could not logged in.
+   *
+   * @param array $session_keys
+   *   The session keys to nullify.
+   */
+  public function setSessionKeysToNullify(array $session_keys) {
+    $this->sessionKeys = $session_keys;
+  }
+
+  /**
    * Creates and/or authenticates an user.
    *
    * @param string $email
@@ -120,7 +149,7 @@ class SocialAuthUserManager {
    *   The user's name.
    * @param string $id
    *   The user's id in provider.
-   * @param string $picture_url
+   * @param string|bool $picture_url
    *   The user's picture.
    *
    * @return \Symfony\Component\HttpFoundation\RedirectResponse
@@ -147,6 +176,7 @@ class SocialAuthUserManager {
     }
 
     drupal_set_message($this->t('You could not be authenticated, please contact the administrator'), 'error');
+    $this->nullifySessionKeys();
     return $this->redirect('user.login');
   }
 
@@ -162,6 +192,7 @@ class SocialAuthUserManager {
   public function authenticateExistingUser(UserInterface $drupal_user) {
     // If Admin (user 1) can not authenticate.
     if ($this->isAdminDisabled($drupal_user)) {
+      $this->nullifySessionKeys();
       drupal_set_message($this->t('Authentication for Admin (user 1) is disabled.'), 'error');
       return $this->redirect('user.login');
     }
@@ -178,6 +209,7 @@ class SocialAuthUserManager {
       return $this->getLoginPostPath();
     }
     else {
+      $this->nullifySessionKeys();
       drupal_set_message($this->t("Your account has not been approved yet or might have been canceled, please contact the administrator"), 'error');
       return $this->redirect('user.login');
     }
@@ -196,6 +228,7 @@ class SocialAuthUserManager {
     // If the account needs admin approval.
     if ($this->isApprovalRequired()) {
       drupal_set_message($this->t("Your account was created, but it needs administrator's approval"), 'warning');
+      $this->nullifySessionKeys();
       return $this->redirect('user.login');
     }
 
@@ -350,6 +383,17 @@ class SocialAuthUserManager {
       ->warning('Login for user @user prevented. Account is blocked.', array('@user' => $drupal_user->getAccountName()));
 
     return FALSE;
+  }
+
+  /**
+   * Nullifies session keys if user could not logged in.
+   */
+  protected function nullifySessionKeys() {
+    if (!empty($this->sessionKeys)) {
+      array_walk($this->sessionKeys, function ($session_key) {
+        $this->session->set($session_key, NULL);
+      });
+    }
   }
 
   /**
