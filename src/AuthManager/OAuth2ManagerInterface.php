@@ -34,7 +34,7 @@ interface OAuth2ManagerInterface {
    * @return $this
    *   The current object.
    */
-  public function oAuthAuthenticate();
+  public function authenticate();
 
   /**
    * Gets the access token after authentication.
