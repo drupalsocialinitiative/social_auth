@@ -11,9 +11,11 @@ final class SocialAuthEvents {
    *
    * Fired before a new user is created when gathering fields.
    *
+   * @Event
+   *
    * @see \Drupal\social_auth\Event\SocialAuthUserFieldsEvent
    *
-   * @var array
+   * @var string
    */
   const USER_FIELDS = 'social_auth.user.fields';
 
