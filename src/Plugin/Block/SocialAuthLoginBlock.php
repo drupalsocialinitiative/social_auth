@@ -60,10 +60,10 @@ class SocialAuthLoginBlock extends BlockBase implements ContainerFactoryPluginIn
    * {@inheritdoc}
    */
   public function build() {
-    return array(
+    return [
       '#theme' => 'login_with',
       '#social_networks' => $this->socialAuthConfig->get('auth'),
-    );
+    ];
   }
 
   /**
