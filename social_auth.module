@@ -9,11 +9,11 @@
  * Implements hook_theme().
  */
 function social_auth_theme() {
-  return [
-    'login_with' => [
-      'variables' => ['social_networks' => NULL],
-    ],
-  ];
+  return array(
+    'login_with' => array(
+      'variables' => array('social_networks' => NULL),
+    ),
+  );
 }
 
 /**

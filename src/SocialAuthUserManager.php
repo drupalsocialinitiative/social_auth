@@ -81,7 +81,7 @@ class SocialAuthUserManager {
    *   Used for user picture directory and file transliteration.
    * @param \Drupal\Core\Routing\RouteProviderInterface $route_provider
    *   Used to check if route path exists.
-   * @param \Symfony\Component\HttpFoundation\Session\SessionInterface $session
+   * @param SessionInterface $session
    *   Used for reading data from and writing data to session.
    */
   public function __construct(ConfigFactoryInterface $config_factory, LoggerChannelFactoryInterface $logger_factory, EventDispatcherInterface $event_dispatcher, EntityTypeManagerInterface $entity_type_manager, EntityFieldManagerInterface $entity_field_manager, Token $token, PhpTransliteration $transliteration, LanguageManagerInterface $language_manager, RouteProviderInterface $route_provider, SessionInterface $session) {
@@ -195,7 +195,7 @@ class SocialAuthUserManager {
     // If user can not login because of their role.
     $disabled_role = $this->isUserRoleDisabled($drupal_user);
     if ($disabled_role) {
-      drupal_set_message($this->t("Authentication for '@role' role is disabled.", ['@role' => $disabled_role]), 'error');
+      drupal_set_message($this->t("Authentication for '@role' role is disabled.", array('@role' => $disabled_role)), 'error');
       return $this->redirect('user.login');
     }
 
@@ -260,7 +260,7 @@ class SocialAuthUserManager {
   public function loadUserByProperty($field, $value) {
     $users = $this->entityTypeManager
       ->getStorage('user')
-      ->loadByProperties([$field => $value]);
+      ->loadByProperties(array($field => $value));
 
     if (!empty($users)) {
       return current($users);
@@ -287,7 +287,7 @@ class SocialAuthUserManager {
     if (!$name || !$email) {
       $this->loggerFactory
         ->get($this->getPluginId())
-        ->error('Failed to create user. Name: @name, email: @email', ['@name' => $name, '@email' => $email]);
+        ->error('Failed to create user. Name: @name, email: @email', array('@name' => $name, '@email' => $email));
       return FALSE;
     }
 
@@ -295,7 +295,7 @@ class SocialAuthUserManager {
     if ($this->registrationBlocked()) {
       $this->loggerFactory
         ->get($this->getPluginId())
-        ->warning('Failed to create user. User registration is disabled in Drupal account settings. Name: @name, email: @email.', ['@name' => $name, '@email' => $email]);
+        ->warning('Failed to create user. User registration is disabled in Drupal account settings. Name: @name, email: @email.', array('@name' => $name, '@email' => $email));
 
       drupal_set_message($this->t('User registration is disabled, please contact the administrator.'), 'error');
 
@@ -318,10 +318,10 @@ class SocialAuthUserManager {
     $violations = $new_user->validate();
     if (count($violations) > 0) {
       $msg = $violations[0]->getMessage();
-      drupal_set_message($this->t('Creation of user account failed: @message', ['@message' => $msg]), 'error');
+      drupal_set_message($this->t('Creation of user account failed: @message', array('@message' => $msg)), 'error');
       $this->loggerFactory
         ->get($this->getPluginId())
-        ->error('Could not create new user: @message', ['@message' => $msg]);
+        ->error('Could not create new user: @message', array('@message' => $msg));
       return FALSE;
     }
 
@@ -375,7 +375,7 @@ class SocialAuthUserManager {
 
     $this->loggerFactory
       ->get($this->getPluginId())
-      ->warning('Login for user @user prevented. Account is blocked.', ['@user' => $drupal_user->getAccountName()]);
+      ->warning('Login for user @user prevented. Account is blocked.', array('@user' => $drupal_user->getAccountName()));
 
     return FALSE;
   }
@@ -470,7 +470,7 @@ class SocialAuthUserManager {
    */
   protected function getLoginPostPath() {
     $post_login = $this->configFactory->get('social_auth.settings')->get('post_login');
-    $routes = $this->routeProvider->getRoutesByNames([$post_login]);
+    $routes = $this->routeProvider->getRoutesByNames(array($post_login));
     if (empty($routes)) {
       // Route does not exist so just redirect to path.
       return new RedirectResponse(Url::fromUserInput($post_login)->toString());
@@ -555,7 +555,7 @@ class SocialAuthUserManager {
   /**
    * Downloads and sets user profile picture.
    *
-   * @param \Drupal\user\Entity\User $drupal_user
+   * @param User $drupal_user
    *   User object to update the profile picture for.
    * @param string $picture_url
    *   Absolute URL where the picture will be downloaded from.
