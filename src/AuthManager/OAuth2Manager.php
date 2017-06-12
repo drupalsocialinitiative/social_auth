@@ -9,11 +9,7 @@ use Drupal\social_api\BaseManager;
  *
  * @package Drupal\social_auth
  */
-abstract class OAuth2Manager extends BaseManager\BaseManager implements OAuth2ManagerInterface {
+abstract class OAuth2Manager extends BaseManager implements OAuth2ManagerInterface {
 
-    /**
-     * Do Nothing
-     *
-     */
-
+  // Do nothing.
 }
