@@ -23,9 +23,12 @@ use Drupal\social_auth\Event\SocialAuthUserFieldsEvent;
 use Drupal\user\Entity\User;
 use Drupal\user\UserInterface;
 use Symfony\Component\HttpFoundation\Session\SessionInterface;
+use Drupal\social_auth\Entity\SocialAuth;
+
 
 /**
- * Contains all logic that is related to Drupal user management.
+ * Contains all logic that is related to Drupal user management
+ * and interact with social_auth entity.
  */
 class SocialAuthUserManager {
   use UrlGeneratorTrait;
@@ -97,6 +100,7 @@ class SocialAuthUserManager {
     $this->session            = $session;
     // Sets default plugin id.
     $this->setPluginId('social_auth');
+
   }
 
   /**

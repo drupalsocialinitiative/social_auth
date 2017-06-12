@@ -2,65 +2,20 @@
 
 namespace Drupal\social_auth\AuthManager;
 
+use Drupal\social_api\BaseManager;
 /**
  * Defines an OAuth2Manager Interface.
  *
  * @package Drupal\social_auth\AuthManager
  */
-interface OAuth2ManagerInterface {
+interface OAuth2ManagerInterface extends BaseManager\BaseManagerInterface {
 
   /**
-   * Sets the service client.
-   *
-   * @param mixed $client
-   *   The service client.
-   *
-   * @return $this
-   *   The current object.
-   */
-  public function setClient($client);
-
-  /**
-   * Gets the service client object.
-   *
-   * @return mixed
-   *   The service client object.
-   */
-  public function getClient();
-
-  /**
-   * Authenticates the users by using the access token.
-   *
-   * @return $this
-   *   The current object.
-   */
-  public function authenticate();
-
-  /**
-   * Gets the access token after authentication.
-   *
-   * @return mixed
-   *   The access token.
-   */
-  public function getAccessToken();
-
-  /**
-   * Sets the default access token.
-   *
-   * @param mixed $access_token
-   *   The access token.
-   *
-   * @return $this
-   *   The current object.
-   */
-  public function setAccessToken($access_token);
-
-  /**
-   * Returns the user information.
+   * Returns the user and related information.
    *
    * @return mixed
    *   The user data.
    */
-  public function getUserInfo();
+  public function getUserDetails();
 
 }
