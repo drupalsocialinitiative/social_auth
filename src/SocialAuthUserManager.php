@@ -25,7 +25,8 @@ use Drupal\user\UserInterface;
 use Symfony\Component\HttpFoundation\Session\SessionInterface;
 
 /**
- * Contains all logic that is related to Drupal user management.
+ * Contains all logic that is related to Drupal user management
+ * and interact with social_auth entity.
  */
 class SocialAuthUserManager {
   use UrlGeneratorTrait;
