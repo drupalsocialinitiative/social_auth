@@ -1,8 +1,8 @@
 <?php
 
-namespace Drupal\social_auth\OAuth2Manager;
+namespace Drupal\social_auth\AuthManager;
 
-use Drupal\social_api\OAuth2Manager as BaseOAuth2Manager;
+use Drupal\social_api\AuthManager\OAuth2Manager as BaseOAuth2Manager;
 
 /**
  * Defines a basic OAuth2Manager.
