@@ -25,7 +25,6 @@ use Drupal\user\UserInterface;
 use Symfony\Component\HttpFoundation\Session\SessionInterface;
 use Drupal\social_auth\Entity\SocialAuth;
 
-
 /**
  * Contains all logic that is related to Drupal user management
  * and interact with social_auth entity.
@@ -100,7 +99,6 @@ class SocialAuthUserManager {
     $this->session            = $session;
     // Sets default plugin id.
     $this->setPluginId('social_auth');
-
   }
 
   /**
@@ -146,9 +144,9 @@ class SocialAuthUserManager {
    * The user's name.
    * @param string $email
    * The user's email address.
-   * @param string $type
+   * @param string $pluginId
    * The social implementer identifier.
-   * @param string $social_media_id
+   * @param string $provider_user_id
    * The unique id returned by the user.
    * @param string|bool $picture_url
    * The user's picture.
@@ -156,24 +154,22 @@ class SocialAuthUserManager {
    * @return \Symfony\Component\HttpFoundation\RedirectResponse
    * A redirect response.
    */
-  public function authenticateUser($name, $email, $type, $social_media_id, $picture_url = FALSE) {
+  public function authenticateUser($name, $email, $pluginId, $provider_user_id, $picture_url = FALSE) {
 
     // Get ID of logged in user.
     $uid = \Drupal::currentUser()->id();
 
-    if($uid){
-      return $this->addUserRecord($uid(), $type, $social_media_id);
-    }
-
     // Checks for record in social _auth entity.
-    $drupal_user_id = $this->checkIfUserExists($type, $social_media_id);
+    $drupal_user_id = $this->checkIfUserExists($pluginId, $provider_user_id );
 
+    if($uid && !drupal_user_id){
+      return $this->addUserRecord($uid(), $pluginId, $provider_user_id );
+    }
 
     if($drupal_user_id) {
       // Load the user by their user_id.
       $drupal_user = $this->loadUserByProperty('uid', $drupal_user_id);
 
-      // If user email has already an account in the site.
       if ($drupal_user) {
         // Authenticates and redirect existing user.
         return $this->authenticateExistingUser($drupal_user);
@@ -182,31 +178,32 @@ class SocialAuthUserManager {
 
     if($email) {
       // Load user by email.
-      $same_email_drupal_user = $this->loadUserByProperty('mail', $email);
+      $drupal_user = $this->loadUserByProperty('mail', $email);
 
       //Check if User with same email account exists.
 
-      if ($same_email_drupal_user) {
+      if ($drupal_user) {
         //Add record for the same user.
-        $this->addUserRecord($same_email_drupal_user->id(), $type, $social_media_id);
+        $this->addUserRecord($drupal_user->id(), $pluginId, $provider_user_id );
 
         // Authenticates and redirect the user.
-        return $this->authenticateExistingUser($same_email_drupal_user);
+        return $this->authenticateExistingUser($drupal_user);
       }
     }
 
-    $drupal_new_user = $this->createUser($name, $email);
-    if ($drupal_new_user) {
+    //If user was not already logged in or registered, create new user.
+    $drupal_user = $this->createUser($name, $email);
+    if ($drupal_user) {
 
       // If the new user could be registered.
-      $this->addUserRecord($drupal_new_user->id(),$type,$social_media_id);
+      $this->addUserRecord($drupal_user->id(),$pluginId,$provider_user_id );
 
       // Download profile picture for the newly created user.
       if ($picture_url) {
-        $this->setProfilePic($drupal_new_user, $picture_url, $social_media_id);
+        $this->setProfilePic($drupal_user, $picture_url, $provider_user_id);
       }
       // Authenticates and redirect new user.
-      return $this->authenticateNewUser($drupal_new_user);
+      return $this->authenticateNewUser($drupal_user);
     }
 
     drupal_set_message($this->t('You could not be authenticated, please contact the administrator'), 'error');
@@ -313,23 +310,23 @@ class SocialAuthUserManager {
   /**
    * Checks if user exist in entity.
    *
-   * @param string $social_media_id
+   * @param string $provider_user_id
    *   User's name on Provider.
-   * @param string $type
+   * @param string $pluginId
    *   User's email address.
    *
    * @return false if user doesn't exist
    *   Else return Drupal User Id associate with the account.
    */
 
-  public function checkIfUserExists($type,$social_media_id) {
+  public function checkIfUserExists($pluginId,$provider_user_id ) {
     $storage = \Drupal::entityManager()->getStorage('social_auth');
     // Perform query on social auth entity.
     $query = \Drupal::entityQuery('social_auth');
 
-    // Check If user exist by using type and social_media_id.
-    $social_auth_user = $query->condition('type', $type)
-      ->condition('social_media_id', $social_media_id)
+    // Check If user exist by using type and provider_user_id .
+    $social_auth_user = $query->condition('type', $pluginId)
+      ->condition('social_media_id', $provider_user_id )
       ->execute();
 
     $user_data = $storage->load(reset($social_auth_user));
@@ -348,22 +345,22 @@ class SocialAuthUserManager {
    *
    * @param integer $user_id
    *   Drupal User ID.
-   * @param string $type
+   * @param string $pluginId
    *   Type of social network.
-   * @param string $social_media_id
+   * @param string $provider_user_id
    *   Unique Social ID returned by social network
    *
    * @return True
    *   if User record was created or
    *   False otherwise
    */
-  public function addUserRecord($user_id,$type,$social_media_id) {
+  public function addUserRecord($user_id,$pluginId,$provider_user_id ) {
     // Make sure we have everything we need.
-    if (!$user_id || !$type || !$social_media_id) {
+    if (!$user_id || !$pluginId || !$provider_user_id ) {
       $this->loggerFactory
         ->get($this->getPluginId())
-        ->error('Failed to add user record in social_auth entiy. User_id: @user_id, social_network_identifier: @social_network_identifier, social_media_id: @social_media_id',
-          array('@user_id' => $user_id, '@social_network_identifier' => $type, '@social_media_id' => $social_media_id));
+        ->error('Failed to add user record in social_auth entiy. User_id: @user_id, social_network_identifier: @social_network_identifier, provider_user_id : @provider_user_id ',
+          array('@user_id' => $user_id, '@social_network_identifier' => $pluginId, '@provider_user_id ' => $provider_user_id ));
       return FALSE;
     }
     else{
@@ -371,8 +368,8 @@ class SocialAuthUserManager {
       $user_info= SocialAuth::create([
         // Required Fields
         'user_id' => $user_id,
-        'type' => $type,
-        'social_media_id' => $social_media_id
+        'type' => $pluginId,
+        'social_media_id' => $provider_user_id
       ]);
 
       //Saving the non-permanent record.
@@ -868,7 +865,6 @@ class SocialAuthUserManager {
       'preferred_langcode' => $langcode,
       'preferred_admin_langcode' => $langcode,
     ];
-
 
     // Dispatches SocialAuthEvents::USER_FIELDS, so that other modules can
     // update this array before an user is saved.
