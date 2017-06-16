@@ -165,13 +165,13 @@ class SocialAuthUserManager {
   public function authenticateUser($name, $email, $pluginId, $provider_user_id, $picture_url = FALSE) {
 
     // Get ID of logged in user.
-    $uid = $this->currentUser->id();
+    $current_user = $this->currentUser;
 
     // Checks for record in social _auth entity.
     $drupal_user_id = $this->checkIfUserExists($pluginId, $provider_user_id);
 
-    if ($uid && !drupal_user_id) {
-      return $this->addUserRecord($uid, $pluginId, $provider_user_id);
+    if ($current_user->isAuthenticated() && !drupal_user_id) {
+      return $this->addUserRecord($current_user->id(), $pluginId, $provider_user_id);
     }
 
     if ($drupal_user_id) {
@@ -332,8 +332,8 @@ class SocialAuthUserManager {
     $query = $this->entityQuery->get('social_auth');
 
     // Check If user exist by using type and provider_user_id .
-    $social_auth_user = $query->condition('type', $pluginId)
-      ->condition('social_media_id', $provider_user_id)
+    $social_auth_user = $query->condition('plugin_id', $pluginId)
+      ->condition('provider_user_id', $provider_user_id)
       ->execute();
 
     $user_data = $storage->load(reset($social_auth_user));
@@ -379,8 +379,8 @@ class SocialAuthUserManager {
       // Add user record.
       $values = [
         'user_id' => $user_id,
-        'type' => $pluginId,
-        'social_media_id' => $provider_user_id,
+        'plugin_id' => $pluginId,
+        'provider_user_id' => $provider_user_id,
       ];
 
       $user_info = $this->entityTypeManager()->getStorage('social_auth')->create($values);
