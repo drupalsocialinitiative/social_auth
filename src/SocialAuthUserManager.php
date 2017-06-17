@@ -163,7 +163,6 @@ class SocialAuthUserManager {
    *   A redirect response.
    */
   public function authenticateUser($name, $email, $pluginId, $provider_user_id, $picture_url = FALSE) {
-
     // Get ID of logged in user.
     $current_user = $this->currentUser;
 
