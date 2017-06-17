@@ -138,7 +138,7 @@ class SocialAuthUserManager {
   /**
    * Sets the session keys to nullify if user could not logged in.
    *
-   * @param array $session_key$entity_type_managers
+   * @param array $session_key
    *   The session keys to nullify.
    */
   public function setSessionKeysToNullify(array $session_keys) {
