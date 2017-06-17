@@ -19,8 +19,8 @@ use Drupal\Core\Entity\ContentEntityInterface;
  *   entity_keys = {
  *     "id" = "id",
  *     "user_id" = "user_id",
- *     "type" = "type",
- *     "social_media_id" = "social_media_id"
+ *     "plugin_id" = "plugin_id",
+ *     "provider_user_id" = "provider_user_id"
  *   },
  * )
  */
@@ -44,15 +44,15 @@ class SocialAuth extends ContentEntityBase implements ContentEntityInterface {
       ->setReadOnly(TRUE);
 
     // Name of the social network account associated.
-    $fields['type'] = BaseFieldDefinition::create('string')
-      ->setLabel(t('TYPE'))
-      ->setDescription(t('Social Network Name.'))
+    $fields['plugin_id'] = BaseFieldDefinition::create('string')
+      ->setLabel(t('PLUGIN ID'))
+      ->setDescription(t('Identifier for social auth implementer.'))
       ->setReadOnly(TRUE);
 
     // Unique Account ID returned by the social network provider.
-    $fields['social_media_id'] = BaseFieldDefinition::create('string')
-      ->setLabel(t('SOCIAL MEDIA ID'))
-      ->setDescription(t('The Unique ID Provided by Social Network.'))
+    $fields['provider_user_id'] = BaseFieldDefinition::create('string')
+      ->setLabel(t('PROVIDER USER ID'))
+      ->setDescription(t('The unique user ID in the provider.'))
       ->setReadOnly(TRUE);
 
     return $fields;

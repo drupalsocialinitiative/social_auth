@@ -12,3 +12,5 @@ services:
       - '@language_manager'
       - '@router.route_provider'
       - '@session'
+      - '@entity.query'
+      - '@current_user'
