@@ -46,13 +46,13 @@ class SocialAuth extends ContentEntityBase implements ContentEntityInterface {
     // Name of the social network account associated.
     $fields['plugin_id'] = BaseFieldDefinition::create('string')
       ->setLabel(t('PLUGIN ID'))
-      ->setDescription(t('Identifier for social provider account.'))
+      ->setDescription(t('Identifier for social auth implementer.'))
       ->setReadOnly(TRUE);
 
     // Unique Account ID returned by the social network provider.
     $fields['provider_user_id'] = BaseFieldDefinition::create('string')
       ->setLabel(t('PROVIDER USER ID'))
-      ->setDescription(t('The Unique ID Provided by Social Network.'))
+      ->setDescription(t('The unique user ID in the provider.'))
       ->setReadOnly(TRUE);
 
     return $fields;

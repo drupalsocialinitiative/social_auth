@@ -163,19 +163,18 @@ class SocialAuthUserManager {
    *   A redirect response.
    */
   public function authenticateUser($name, $email, $pluginId, $provider_user_id, $picture_url = FALSE) {
-    // Get ID of logged in user.
-    $current_user = $this->currentUser;
 
     // Checks for record in social _auth entity.
-    $drupal_user_id = $this->checkIfUserExists($pluginId, $provider_user_id);
+    $user_exist = $this->checkIfUserExists($pluginId, $provider_user_id);
 
-    if ($current_user->isAuthenticated() && !drupal_user_id) {
-      return $this->addUserRecord($current_user->id(), $pluginId, $provider_user_id);
+    // Checks if user has authenticated role and no record exist.
+    if ($this->currentUser->isAuthenticated() && !$user_exist) {
+      return $this->addUserRecord($this->currentUser->id(), $pluginId, $provider_user_id);
     }
 
-    if ($drupal_user_id) {
+    if ($user_exist) {
       // Load the user by their Drupal:user_id.
-      $drupal_user = $this->loadUserByProperty('uid', $drupal_user_id);
+      $drupal_user = $this->loadUserByProperty('uid', $user_exist);
 
       if ($drupal_user) {
         // Authenticates and redirect existing user.
@@ -337,13 +336,11 @@ class SocialAuthUserManager {
 
     $user_data = $storage->load(reset($social_auth_user));
 
-    if (!$social_auth_user) {
-      return FALSE;
-    }
-    else {
+    if ($social_auth_user) {
       // Return User ID.
       return $user_data->get('user_id')->getValue()[0]['value'];
     }
+    return FALSE;
   }
 
   /**
