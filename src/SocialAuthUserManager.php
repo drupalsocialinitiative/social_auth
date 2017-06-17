@@ -138,7 +138,7 @@ class SocialAuthUserManager {
   /**
    * Sets the session keys to nullify if user could not logged in.
    *
-   * @param array $session_key
+   * @param array $session_keys
    *   The session keys to nullify.
    */
   public function setSessionKeysToNullify(array $session_keys) {
@@ -172,10 +172,10 @@ class SocialAuthUserManager {
       return $this->addUserRecord($this->currentUser->id(), $pluginId, $provider_user_id);
     }
 
+    // If User is not logged in, then load drupal user by $user_exist.
     if ($user_exist) {
       // Load the user by their Drupal:user_id.
       $drupal_user = $this->loadUserByProperty('uid', $user_exist);
-
       if ($drupal_user) {
         // Authenticates and redirect existing user.
         return $this->authenticateExistingUser($drupal_user);
@@ -352,10 +352,6 @@ class SocialAuthUserManager {
    *   Type of social network.
    * @param string $provider_user_id
    *   Unique Social ID returned by social network.
-   *
-   * @return True
-   *   if User record was created or
-   *   False otherwise
    */
   public function addUserRecord($user_id, $pluginId, $provider_user_id) {
     // Make sure we have everything we need.
@@ -367,9 +363,8 @@ class SocialAuthUserManager {
           array(
             '@user_id' => $user_id,
             '@social_network_identifier' => $pluginId,
-            '@provider_user_id ' => $provider_user_id,
+            '@provider_user_id ' => $provider_user_id
           ));
-      return FALSE;
     }
     else {
       // Add user record.
@@ -383,7 +378,6 @@ class SocialAuthUserManager {
 
       // Save the entity.
       $user_info->save();
-      return TRUE;
     }
 
   }
