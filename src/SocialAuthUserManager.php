@@ -138,7 +138,7 @@ class SocialAuthUserManager {
   /**
    * Sets the session keys to nullify if user could not logged in.
    *
-   * @param array $session_keys
+   * @param array $session_key$entity_type_managers
    *   The session keys to nullify.
    */
   public function setSessionKeysToNullify(array $session_keys) {
@@ -383,7 +383,7 @@ class SocialAuthUserManager {
         'provider_user_id' => $provider_user_id,
       ];
 
-      $user_info = $this->entityTypeManager()->getStorage('social_auth')->create($values);
+      $user_info = $this->entityTypeManager->getStorage('social_auth')->create($values);
 
       // Save the entity.
       $user_info->save();
