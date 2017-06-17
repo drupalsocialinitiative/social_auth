@@ -172,7 +172,7 @@ class SocialAuthUserManager {
       return $this->addUserRecord($this->currentUser->id(), $pluginId, $provider_user_id);
     }
 
-    // If User is not logged in, then load drupal user by $user_exist.
+    // If User is not logged in, then load user by $user_exist.
     if ($user_exist) {
       // Load the user by their Drupal:user_id.
       $drupal_user = $this->loadUserByProperty('uid', $user_exist);
@@ -365,6 +365,8 @@ class SocialAuthUserManager {
             '@social_network_identifier' => $pluginId,
             '@provider_user_id ' => $provider_user_id
           ));
+
+      return FALSE;
     }
     else {
       // Add user record.
@@ -378,6 +380,7 @@ class SocialAuthUserManager {
 
       // Save the entity.
       $user_info->save();
+      return TRUE;
     }
 
   }
