@@ -162,7 +162,7 @@ class SocialAuthUserManager {
    * @return \Symfony\Component\HttpFoundation\RedirectResponse
    *   A redirect response.
    */
-  public function authenticateUser($name, $email, $pluginId, $provider_user_id, $picture_url = FALSE) {
+  public function authenticateUser($name, $email, $pluginId, $provider_user_id, $picture_url = FALSE, $data) {
 
     // Checks for record in social _auth entity.
     $user_exist = $this->checkIfUserExists($pluginId, $provider_user_id);
@@ -189,7 +189,7 @@ class SocialAuthUserManager {
       // Check if User with same email account exists.
       if ($drupal_user) {
         // Add record for the same user.
-        $this->addUserRecord($drupal_user->id(), $pluginId, $provider_user_id);
+        $this->addUserRecord($drupal_user->id(), $pluginId, $provider_user_id, $data);
 
         // Authenticates and redirect the user.
         return $this->authenticateExistingUser($drupal_user);
@@ -201,7 +201,7 @@ class SocialAuthUserManager {
     if ($drupal_user) {
 
       // If the new user could be registered.
-      $this->addUserRecord($drupal_user->id(), $pluginId, $provider_user_id);
+      $this->addUserRecord($drupal_user->id(), $pluginId, $provider_user_id, $data);
 
       // Download profile picture for the newly created user.
       if ($picture_url) {
@@ -333,14 +333,10 @@ class SocialAuthUserManager {
     $social_auth_user = $query->condition('plugin_id', $pluginId)
       ->condition('provider_user_id', $provider_user_id)
       ->execute();
-
-    $user_data = $storage->load(reset($social_auth_user));
-
-    if ($social_auth_user) {
-      // Return User ID.
-      return $user_data->get('user_id')->getValue()[0]['value'];
-    }
-    return FALSE;
+    if (!$social_auth_user)
+      return FALSE;
+    $user_data = $storage->load(array_values($social_auth_user)[0]);
+    return $user_data->get('user_id')->getValue()[0]['value'];
   }
 
   /**
@@ -353,7 +349,7 @@ class SocialAuthUserManager {
    * @param string $provider_user_id
    *   Unique Social ID returned by social network.
    */
-  public function addUserRecord($user_id, $pluginId, $provider_user_id) {
+  public function addUserRecord($user_id, $pluginId, $provider_user_id, $user_data) {
     // Make sure we have everything we need.
     if (!$user_id || !$pluginId || !$provider_user_id) {
       $this->loggerFactory
@@ -363,7 +359,7 @@ class SocialAuthUserManager {
           array(
             '@user_id' => $user_id,
             '@social_network_identifier' => $pluginId,
-            '@provider_user_id ' => $provider_user_id
+            '@provider_user_id ' => $provider_user_id,
           ));
 
       return FALSE;
@@ -374,6 +370,7 @@ class SocialAuthUserManager {
         'user_id' => $user_id,
         'plugin_id' => $pluginId,
         'provider_user_id' => $provider_user_id,
+        'additional_data' => $user_data,
       ];
 
       $user_info = $this->entityTypeManager->getStorage('social_auth')->create($values);
