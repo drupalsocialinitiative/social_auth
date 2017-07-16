@@ -20,7 +20,8 @@ use Drupal\Core\Entity\ContentEntityInterface;
  *     "id" = "id",
  *     "user_id" = "user_id",
  *     "plugin_id" = "plugin_id",
- *     "provider_user_id" = "provider_user_id"
+ *     "provider_user_id" = "provider_user_id",
+ *     "additional_data" = "additional_data"
  *   },
  * )
  */
@@ -53,6 +54,12 @@ class SocialAuth extends ContentEntityBase implements ContentEntityInterface {
     $fields['provider_user_id'] = BaseFieldDefinition::create('string')
       ->setLabel(t('PROVIDER USER ID'))
       ->setDescription(t('The unique user ID in the provider.'))
+      ->setReadOnly(TRUE);
+
+    // Additional Data ccollected social network provider.
+    $fields['additional_data'] = BaseFieldDefinition::create('string')
+      ->setLabel(t('ADDITIONAL DATA.'))
+      ->setDescription(t('The additional data kept for future use.'))
       ->setReadOnly(TRUE);
 
     return $fields;
