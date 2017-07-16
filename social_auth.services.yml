@@ -14,3 +14,9 @@ services:
       - '@session'
       - '@entity.query'
       - '@current_user'
+      - '@social_auth.social_auth_data_handler'
+
+  social_auth.social_auth_data_handler:
+    class: Drupal\social_auth\SocialAuthDataHandler
+    arguments:
+      - '@session'

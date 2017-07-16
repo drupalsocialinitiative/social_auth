@@ -32,7 +32,7 @@ function social_auth_update_8001(&$sandbox) {
   $config->set('post_login_path', 'user')
     ->set('redirect_user_form', FALSE)
     ->set('disable_admin_login', TRUE)
-    ->set('disabled_roles', array())
+    ->set('disabled_roles', [])
     ->save();
 }
 
