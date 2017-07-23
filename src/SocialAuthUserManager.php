@@ -53,13 +53,6 @@ class SocialAuthUserManager {
   protected $pluginId;
 
   /**
-   * The session manager.
-   *
-   * @var \Symfony\Component\HttpFoundation\Session\SessionInterface
-   */
-  protected $session;
-
-  /**
    * Session keys to nullify is user could not be logged in.
    *
    * @var array
@@ -102,7 +95,7 @@ class SocialAuthUserManager {
    * @param \Drupal\social_auth\SocialAuthDataHandler $social_auth_data_handler
    *   Class to interact with session.
    */
-  public function __construct(ConfigFactoryInterface $config_factory, LoggerChannelFactoryInterface $logger_factory, EventDispatcherInterface $event_dispatcher, EntityTypeManagerInterface $entity_type_manager, EntityFieldManagerInterface $entity_field_manager, Token $token, PhpTransliteration $transliteration, LanguageManagerInterface $language_manager, RouteProviderInterface $route_provider, SessionInterface $session, QueryFactory $entityQuery, AccountProxy $current_user, SocialAuthDataHandler $social_auth_data_handler) {
+  public function __construct(ConfigFactoryInterface $config_factory, LoggerChannelFactoryInterface $logger_factory, EventDispatcherInterface $event_dispatcher, EntityTypeManagerInterface $entity_type_manager, EntityFieldManagerInterface $entity_field_manager, Token $token, PhpTransliteration $transliteration, LanguageManagerInterface $language_manager, RouteProviderInterface $route_provider, QueryFactory $entityQuery, AccountProxy $current_user, SocialAuthDataHandler $social_auth_data_handler) {
     $this->configFactory      = $config_factory;
     $this->loggerFactory      = $logger_factory;
     $this->eventDispatcher    = $event_dispatcher;
@@ -112,7 +105,6 @@ class SocialAuthUserManager {
     $this->transliteration    = $transliteration;
     $this->languageManager    = $language_manager;
     $this->routeProvider      = $route_provider;
-    $this->session            = $session;
     $this->entityQuery        = $entityQuery;
     $this->currentUser        = $current_user;
     $this->dataHandler        = $social_auth_data_handler;
@@ -167,7 +159,7 @@ class SocialAuthUserManager {
    *   The social implementer identifier.
    * @param string $provider_user_id
    *   The unique id returned by the user.
-   * @param JSON $data
+   * @param string $data
    *   The additional user_data to be stored in database.
    * @param string|bool $picture_url
    *   The user's picture.
@@ -175,7 +167,7 @@ class SocialAuthUserManager {
    * @return \Symfony\Component\HttpFoundation\RedirectResponse
    *   A redirect response.
    */
-  public function authenticateUser($name, $email, $pluginId, $provider_user_id, $data, $picture_url = FALSE) {
+  public function authenticateUser($name, $email, $pluginId, $provider_user_id, $picture_url = FALSE, $data = '' ) {
 
     // Checks for record in social _auth entity.
     $user_exist = $this->checkIfUserExists($pluginId, $provider_user_id);
@@ -362,7 +354,7 @@ class SocialAuthUserManager {
    *   Type of social network.
    * @param string $provider_user_id
    *   Unique Social ID returned by social network.
-   * @param JSON $user_data
+   * @param string $user_data
    *   Additional user data collected.
    *
    * @return true
@@ -507,7 +499,7 @@ class SocialAuthUserManager {
   protected function nullifySessionKeys() {
     if (!empty($this->sessionKeys)) {
       array_walk($this->sessionKeys, function ($session_key) {
-        $this->session->set($this->dataHandler->getSessionPrefix() . $session_key, NULL);
+        $this->dataHandler->set($this->dataHandler->getSessionPrefix() . $session_key, NULL);
       });
     }
   }
