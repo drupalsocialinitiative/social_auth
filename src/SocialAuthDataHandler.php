@@ -22,14 +22,25 @@ class SocialAuthDataHandler {
   }
 
   /**
-   * {@inheritdoc}
+   * Gets a session variable by key.
+   *
+   * @param string $key
+   *   The session variable key.
+   *
+   * @return mixed
+   *   The session variable value.
    */
   public function get($key) {
     return $this->session->get($this->getSessionPrefix() . $key);
   }
 
   /**
-   * {@inheritdoc}
+   * Sets a new session variable.
+   *
+   * @param string $key
+   *   The session variable key.
+   * @param mixed $value
+   *   The session variable value.
    */
   public function set($key, $value) {
     $this->session->set($this->getSessionPrefix() . $key, $value);
@@ -47,9 +58,12 @@ class SocialAuthDataHandler {
 
   /**
    * Sets the session prefix for the data handler.
+   *
+   * @param string $prefix
+   *   The session prefix.
    */
   public function setSessionPrefix($prefix) {
-    $this->sessionPrefix = $prefix;
+    $this->sessionPrefix = $prefix . '_';
   }
 
 }
