@@ -53,18 +53,19 @@ class SocialAuthUserManager {
   protected $pluginId;
 
   /**
-   * The session manager.
-   *
-   * @var \Symfony\Component\HttpFoundation\Session\SessionInterface
-   */
-  protected $session;
-
-  /**
    * Session keys to nullify is user could not be logged in.
    *
    * @var array
    */
   protected $sessionKeys;
+
+
+  /**
+   * Session keys to nullify is user could not be logged in.
+   *
+   * @var \Drupal\social_auth\SocialAuthDataHandler
+   */
+  protected $dataHandler;
 
   /**
    * Constructor.
@@ -91,8 +92,10 @@ class SocialAuthUserManager {
    *   Used to get entity query object for this entity type.
    * @param \Drupal\Core\Session\AccountProxy $current_user
    *   Used to get current active user.
+   * @param \Drupal\social_auth\SocialAuthDataHandler $social_auth_data_handler
+   *   Class to interact with session.
    */
-  public function __construct(ConfigFactoryInterface $config_factory, LoggerChannelFactoryInterface $logger_factory, EventDispatcherInterface $event_dispatcher, EntityTypeManagerInterface $entity_type_manager, EntityFieldManagerInterface $entity_field_manager, Token $token, PhpTransliteration $transliteration, LanguageManagerInterface $language_manager, RouteProviderInterface $route_provider, SessionInterface $session, QueryFactory $entityQuery, AccountProxy $current_user) {
+  public function __construct(ConfigFactoryInterface $config_factory, LoggerChannelFactoryInterface $logger_factory, EventDispatcherInterface $event_dispatcher, EntityTypeManagerInterface $entity_type_manager, EntityFieldManagerInterface $entity_field_manager, Token $token, PhpTransliteration $transliteration, LanguageManagerInterface $language_manager, RouteProviderInterface $route_provider, QueryFactory $entityQuery, AccountProxy $current_user, SocialAuthDataHandler $social_auth_data_handler) {
     $this->configFactory      = $config_factory;
     $this->loggerFactory      = $logger_factory;
     $this->eventDispatcher    = $event_dispatcher;
@@ -102,9 +105,9 @@ class SocialAuthUserManager {
     $this->transliteration    = $transliteration;
     $this->languageManager    = $language_manager;
     $this->routeProvider      = $route_provider;
-    $this->session            = $session;
     $this->entityQuery        = $entityQuery;
     $this->currentUser        = $current_user;
+    $this->dataHandler        = $social_auth_data_handler;
     // Sets default plugin id.
     $this->setPluginId('social_auth');
   }
@@ -156,20 +159,22 @@ class SocialAuthUserManager {
    *   The social implementer identifier.
    * @param string $provider_user_id
    *   The unique id returned by the user.
+   * @param string $data
+   *   The additional user_data to be stored in database.
    * @param string|bool $picture_url
    *   The user's picture.
    *
    * @return \Symfony\Component\HttpFoundation\RedirectResponse
    *   A redirect response.
    */
-  public function authenticateUser($name, $email, $pluginId, $provider_user_id, $picture_url = FALSE) {
+  public function authenticateUser($name, $email, $pluginId, $provider_user_id, $picture_url = FALSE, $data = '' ) {
 
     // Checks for record in social _auth entity.
     $user_exist = $this->checkIfUserExists($pluginId, $provider_user_id);
 
     // Checks if user has authenticated role and no record exist.
     if ($this->currentUser->isAuthenticated() && !$user_exist) {
-      return $this->addUserRecord($this->currentUser->id(), $pluginId, $provider_user_id);
+      return $this->addUserRecord($this->currentUser->id(), $pluginId, $provider_user_id, $data);
     }
 
     // If User is not logged in, then load user by $user_exist.
@@ -189,7 +194,7 @@ class SocialAuthUserManager {
       // Check if User with same email account exists.
       if ($drupal_user) {
         // Add record for the same user.
-        $this->addUserRecord($drupal_user->id(), $pluginId, $provider_user_id);
+        $this->addUserRecord($drupal_user->id(), $pluginId, $provider_user_id, $data);
 
         // Authenticates and redirect the user.
         return $this->authenticateExistingUser($drupal_user);
@@ -201,7 +206,7 @@ class SocialAuthUserManager {
     if ($drupal_user) {
 
       // If the new user could be registered.
-      $this->addUserRecord($drupal_user->id(), $pluginId, $provider_user_id);
+      $this->addUserRecord($drupal_user->id(), $pluginId, $provider_user_id, $data);
 
       // Download profile picture for the newly created user.
       if ($picture_url) {
@@ -237,7 +242,7 @@ class SocialAuthUserManager {
     $disabled_role = $this->isUserRoleDisabled($drupal_user);
 
     if ($disabled_role) {
-      drupal_set_message($this->t("Authentication for '@role' role is disabled.", array('@role' => $disabled_role)), 'error');
+      drupal_set_message($this->t("Authentication for '@role' role is disabled.", ['@role' => $disabled_role]), 'error');
       return $this->redirect('user.login');
     }
 
@@ -302,7 +307,7 @@ class SocialAuthUserManager {
   public function loadUserByProperty($field, $value) {
     $users = $this->entityTypeManager
       ->getStorage('user')
-      ->loadByProperties(array($field => $value));
+      ->loadByProperties([$field => $value]);
 
     if (!empty($users)) {
       return current($users);
@@ -333,14 +338,11 @@ class SocialAuthUserManager {
     $social_auth_user = $query->condition('plugin_id', $pluginId)
       ->condition('provider_user_id', $provider_user_id)
       ->execute();
-
-    $user_data = $storage->load(reset($social_auth_user));
-
-    if ($social_auth_user) {
-      // Return User ID.
-      return $user_data->get('user_id')->getValue()[0]['value'];
+    if (!$social_auth_user) {
+      return FALSE;
     }
-    return FALSE;
+    $user_data = $storage->load(array_values($social_auth_user)[0]);
+    return $user_data->get('user_id')->getValue()[0]['value'];
   }
 
   /**
@@ -352,19 +354,25 @@ class SocialAuthUserManager {
    *   Type of social network.
    * @param string $provider_user_id
    *   Unique Social ID returned by social network.
+   * @param string $user_data
+   *   Additional user data collected.
+   *
+   * @return true
+   *   if user record is added in social_auth entity table
+   *   Else false.
    */
-  public function addUserRecord($user_id, $pluginId, $provider_user_id) {
+  public function addUserRecord($user_id, $pluginId, $provider_user_id, $user_data) {
     // Make sure we have everything we need.
     if (!$user_id || !$pluginId || !$provider_user_id) {
       $this->loggerFactory
         ->get($this->getPluginId())
         ->error('Failed to add user record in social_auth entiy.
           User_id: @user_id, social_network_identifier: @social_network_identifier, provider_user_id : @provider_user_id ',
-          array(
+          [
             '@user_id' => $user_id,
             '@social_network_identifier' => $pluginId,
-            '@provider_user_id ' => $provider_user_id
-          ));
+            '@provider_user_id ' => $provider_user_id,
+          ]);
 
       return FALSE;
     }
@@ -374,6 +382,7 @@ class SocialAuthUserManager {
         'user_id' => $user_id,
         'plugin_id' => $pluginId,
         'provider_user_id' => $provider_user_id,
+        'additional_data' => $user_data,
       ];
 
       $user_info = $this->entityTypeManager->getStorage('social_auth')->create($values);
@@ -402,7 +411,7 @@ class SocialAuthUserManager {
     if (!$name) {
       $this->loggerFactory
         ->get($this->getPluginId())
-        ->error('Failed to create user. Name: @name', array('@name' => $name));
+        ->error('Failed to create user. Name: @name', ['@name' => $name]);
       return FALSE;
     }
 
@@ -410,7 +419,7 @@ class SocialAuthUserManager {
     if ($this->registrationBlocked()) {
       $this->loggerFactory
         ->get($this->getPluginId())
-        ->warning('Failed to create user. User registration is disabled in Drupal account settings. Name: @name, email: @email.', array('@name' => $name, '@email' => $email));
+        ->warning('Failed to create user. User registration is disabled in Drupal account settings. Name: @name, email: @email.', ['@name' => $name, '@email' => $email]);
 
       drupal_set_message($this->t('User registration is disabled, please contact the administrator.'), 'error');
 
@@ -479,7 +488,7 @@ class SocialAuthUserManager {
 
     $this->loggerFactory
       ->get($this->getPluginId())
-      ->warning('Login for user @user prevented. Account is blocked.', array('@user' => $drupal_user->getAccountName()));
+      ->warning('Login for user @user prevented. Account is blocked.', ['@user' => $drupal_user->getAccountName()]);
 
     return FALSE;
   }
@@ -490,7 +499,7 @@ class SocialAuthUserManager {
   protected function nullifySessionKeys() {
     if (!empty($this->sessionKeys)) {
       array_walk($this->sessionKeys, function ($session_key) {
-        $this->session->set($session_key, NULL);
+        $this->dataHandler->set($this->dataHandler->getSessionPrefix() . $session_key, NULL);
       });
     }
   }
@@ -574,7 +583,7 @@ class SocialAuthUserManager {
    */
   protected function getLoginPostPath() {
     $post_login = $this->configFactory->get('social_auth.settings')->get('post_login');
-    $routes = $this->routeProvider->getRoutesByNames(array($post_login));
+    $routes = $this->routeProvider->getRoutesByNames([$post_login]);
     if (empty($routes)) {
       // Route does not exist so just redirect to path.
       return new RedirectResponse(Url::fromUserInput($post_login)->toString());
@@ -648,8 +657,8 @@ class SocialAuthUserManager {
    */
   protected function getNewUserStatus() {
     if ($this->configFactory
-        ->get('user.settings')
-        ->get('register') == 'visitors') {
+      ->get('user.settings')
+      ->get('register') == 'visitors') {
       return 1;
     }
 
