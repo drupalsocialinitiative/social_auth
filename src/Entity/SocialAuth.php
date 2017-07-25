@@ -59,7 +59,7 @@ class SocialAuth extends ContentEntityBase implements ContentEntityInterface {
       ->setDescription(t('The unique user ID in the provider.'));
 
     // Additional Data ccollected social network provider.
-    $fields['additional_data'] = BaseFieldDefinition::create('string')
+    $fields['additional_data'] = BaseFieldDefinition::create('string_long')
       ->setLabel(t('Additional data'))
       ->setDescription(t('The additional data kept for future use.'));
 
