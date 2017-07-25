@@ -497,7 +497,7 @@ class SocialAuthUserManager {
   /**
    * Nullifies session keys if user could not logged in.
    */
-  protected function nullifySessionKeys() {
+  public function nullifySessionKeys() {
     if (!empty($this->sessionKeys)) {
       array_walk($this->sessionKeys, function ($session_key) {
         $this->dataHandler->set($this->dataHandler->getSessionPrefix() . $session_key, NULL);
