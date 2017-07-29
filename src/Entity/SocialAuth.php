@@ -21,6 +21,7 @@ use Drupal\Core\Entity\ContentEntityInterface;
  *     "user_id" = "user_id",
  *     "plugin_id" = "plugin_id",
  *     "provider_user_id" = "provider_user_id",
+ *     "token" = "token",
  *     "additional_data" = "additional_data"
  *   },
  * )
@@ -29,6 +30,40 @@ class SocialAuth extends ContentEntityBase implements ContentEntityInterface {
 
   /**
    * Creating fields.
+   */
+
+  /**
+   * {@inheritdoc}
+   */
+  public function getToken() {
+    return $this->get('token')->value;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function getData() {
+    return $this->get('additional_data')->value;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function setToken($token) {
+    $this->set('token', $token);
+    return $this;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function setData($data) {
+    $this->set('additional_data', $data);
+    return $this;
+  }
+
+  /**
+   *
    */
   public static function baseFieldDefinitions(EntityTypeInterface $entity_type) {
 
@@ -44,9 +79,10 @@ class SocialAuth extends ContentEntityBase implements ContentEntityInterface {
       ->setReadOnly(TRUE);
 
     // The ID of user account associated.
-    $fields['user_id'] = BaseFieldDefinition::create('integer')
+    $fields['user_id'] = BaseFieldDefinition::create('entity_reference')
       ->setLabel(t('User ID'))
-      ->setDescription(t('The Drupal uid associated with social network.'));
+      ->setDescription(t('The Drupal uid associated with social network.'))
+      ->setSetting('target_type', 'user');
 
     // Name of the social network account associated.
     $fields['plugin_id'] = BaseFieldDefinition::create('string')
@@ -58,7 +94,12 @@ class SocialAuth extends ContentEntityBase implements ContentEntityInterface {
       ->setLabel(t('Provider user ID'))
       ->setDescription(t('The unique user ID in the provider.'));
 
-    // Additional Data ccollected social network provider.
+    // Token received after user authentication.
+    $fields['token'] = BaseFieldDefinition::create('string_long')
+      ->setLabel(t('Token received after user authentication'))
+      ->setDescription(t('Used to make API calls.'));
+
+    // Additional Data collected social network provider.
     $fields['additional_data'] = BaseFieldDefinition::create('string_long')
       ->setLabel(t('Additional data'))
       ->setDescription(t('The additional data kept for future use.'));

@@ -168,7 +168,7 @@ class SocialAuthUserManager {
    * @return \Symfony\Component\HttpFoundation\RedirectResponse
    *   A redirect response.
    */
-  public function authenticateUser($name, $email, $pluginId, $provider_user_id, $picture_url = FALSE, $data = '') {
+  public function authenticateUser($name, $email, $pluginId, $provider_user_id, $picture_url = FALSE, $token, $data = '') {
 
     // Checks for record in social _auth entity.
     $user_exist = $this->checkIfUserExists($pluginId, $provider_user_id);
@@ -195,7 +195,7 @@ class SocialAuthUserManager {
       // Check if User with same email account exists.
       if ($drupal_user) {
         // Add record for the same user.
-        $this->addUserRecord($drupal_user->id(), $pluginId, $provider_user_id, $data);
+        $this->addUserRecord($drupal_user->id(), $pluginId, $provider_user_id, $token, $data);
 
         // Authenticates and redirect the user.
         return $this->authenticateExistingUser($drupal_user);
@@ -207,7 +207,7 @@ class SocialAuthUserManager {
     if ($drupal_user) {
 
       // If the new user could be registered.
-      $this->addUserRecord($drupal_user->id(), $pluginId, $provider_user_id, $data);
+      $this->addUserRecord($drupal_user->id(), $pluginId, $provider_user_id, $token, $data);
 
       // Download profile picture for the newly created user.
       if ($picture_url) {
@@ -362,7 +362,7 @@ class SocialAuthUserManager {
    *   if user record is added in social_auth entity table
    *   Else false.
    */
-  public function addUserRecord($user_id, $pluginId, $provider_user_id, $user_data) {
+  public function addUserRecord($user_id, $pluginId, $provider_user_id, $token, $user_data) {
     // Make sure we have everything we need.
     if (!$user_id || !$pluginId || !$provider_user_id) {
       $this->loggerFactory
@@ -383,6 +383,7 @@ class SocialAuthUserManager {
         'user_id' => $user_id,
         'plugin_id' => $pluginId,
         'provider_user_id' => $provider_user_id,
+        'token' => $token,
         'additional_data' => $user_data,
       ];
 
