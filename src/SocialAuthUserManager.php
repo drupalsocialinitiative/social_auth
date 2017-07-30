@@ -160,6 +160,8 @@ class SocialAuthUserManager {
    *   The social implementer identifier.
    * @param string $provider_user_id
    *   The unique id returned by the user.
+   * @param string $token
+   *   The access token for making additional API calls.
    * @param string|bool $picture_url
    *   The user's picture.
    * @param string $data
@@ -168,14 +170,14 @@ class SocialAuthUserManager {
    * @return \Symfony\Component\HttpFoundation\RedirectResponse
    *   A redirect response.
    */
-  public function authenticateUser($name, $email, $pluginId, $provider_user_id, $picture_url = FALSE, $token, $data = '') {
+  public function authenticateUser($name, $email, $pluginId, $provider_user_id, $token, $picture_url = FALSE, $data = '') {
 
     // Checks for record in social _auth entity.
     $user_exist = $this->checkIfUserExists($pluginId, $provider_user_id);
 
     // Checks if user has authenticated role and no record exist.
     if ($this->currentUser->isAuthenticated() && !$user_exist) {
-      return $this->addUserRecord($this->currentUser->id(), $pluginId, $provider_user_id, $data);
+      return $this->addUserRecord($this->currentUser->id(), $pluginId, $provider_user_id, $token, $data);
     }
 
     // If User is not logged in, then load user by $user_exist.
@@ -355,6 +357,8 @@ class SocialAuthUserManager {
    *   Type of social network.
    * @param string $provider_user_id
    *   Unique Social ID returned by social network.
+   * @param string $token
+   *   For making API calls.
    * @param string $user_data
    *   Additional user data collected.
    *
