@@ -171,7 +171,7 @@ class SocialAuthUserManager {
   public function authenticateUser($name, $email, $provider_user_id, $token, $picture_url = FALSE, $data = '') {
 
     // Checks for record in social _auth entity.
-    $user_exist = $this->checkIfUserExists($this->pluginId, $provider_user_id);
+    $user_exist = $this->checkIfUserExists($provider_user_id);
 
     // Checks if user has authenticated role and no record exist.
     if ($this->currentUser->isAuthenticated() && !$user_exist) {
