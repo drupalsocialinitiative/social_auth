@@ -156,10 +156,10 @@ class SocialAuthUserManager {
    *   The user's name.
    * @param string $email
    *   The user's email address.
-   * @param string $pluginId
-   *   The social implementer identifier.
    * @param string $provider_user_id
    *   The unique id returned by the user.
+   * @param string $token
+   *   The access token for making additional API calls.
    * @param string|bool $picture_url
    *   The user's picture.
    * @param string $data
@@ -168,14 +168,14 @@ class SocialAuthUserManager {
    * @return \Symfony\Component\HttpFoundation\RedirectResponse
    *   A redirect response.
    */
-  public function authenticateUser($name, $email, $pluginId, $provider_user_id, $picture_url = FALSE, $data = '') {
+  public function authenticateUser($name, $email, $provider_user_id, $token, $picture_url = FALSE, $data = '') {
 
     // Checks for record in social _auth entity.
-    $user_exist = $this->checkIfUserExists($pluginId, $provider_user_id);
+    $user_exist = $this->checkIfUserExists($provider_user_id);
 
     // Checks if user has authenticated role and no record exist.
     if ($this->currentUser->isAuthenticated() && !$user_exist) {
-      return $this->addUserRecord($this->currentUser->id(), $pluginId, $provider_user_id, $data);
+      return $this->addUserRecord($this->currentUser->id(), $provider_user_id, $token, $data);
     }
 
     // If User is not logged in, then load user by $user_exist.
@@ -195,7 +195,7 @@ class SocialAuthUserManager {
       // Check if User with same email account exists.
       if ($drupal_user) {
         // Add record for the same user.
-        $this->addUserRecord($drupal_user->id(), $pluginId, $provider_user_id, $data);
+        $this->addUserRecord($drupal_user->id(), $provider_user_id, $token, $data);
 
         // Authenticates and redirect the user.
         return $this->authenticateExistingUser($drupal_user);
@@ -207,7 +207,7 @@ class SocialAuthUserManager {
     if ($drupal_user) {
 
       // If the new user could be registered.
-      $this->addUserRecord($drupal_user->id(), $pluginId, $provider_user_id, $data);
+      $this->addUserRecord($drupal_user->id(), $provider_user_id, $token, $data);
 
       // Download profile picture for the newly created user.
       if ($picture_url) {
@@ -321,8 +321,6 @@ class SocialAuthUserManager {
   /**
    * Checks if user exist in entity.
    *
-   * @param string $pluginId
-   *   User's email address.
    * @param string $provider_user_id
    *   User's name on Provider.
    *
@@ -330,20 +328,20 @@ class SocialAuthUserManager {
    *   if user doesn't exist
    *   Else return Drupal User Id associate with the account.
    */
-  public function checkIfUserExists($pluginId, $provider_user_id) {
+  public function checkIfUserExists($provider_user_id) {
     $storage = $this->entityTypeManager->getStorage('social_auth');
     // Perform query on social auth entity.
     $query = $this->entityQuery->get('social_auth');
 
     // Check If user exist by using type and provider_user_id .
-    $social_auth_user = $query->condition('plugin_id', $pluginId)
+    $social_auth_user = $query->condition('plugin_id', $this->pluginId)
       ->condition('provider_user_id', $provider_user_id)
       ->execute();
     if (!$social_auth_user) {
       return FALSE;
     }
     $user_data = $storage->load(array_values($social_auth_user)[0]);
-    return $user_data->get('user_id')->getValue()[0]['value'];
+    return $user_data->get('user_id')->getValue()[0]["target_id"];
   }
 
   /**
@@ -351,10 +349,10 @@ class SocialAuthUserManager {
    *
    * @param int $user_id
    *   Drupal User ID.
-   * @param string $pluginId
-   *   Type of social network.
    * @param string $provider_user_id
    *   Unique Social ID returned by social network.
+   * @param string $token
+   *   For making API calls.
    * @param string $user_data
    *   Additional user data collected.
    *
@@ -362,16 +360,16 @@ class SocialAuthUserManager {
    *   if user record is added in social_auth entity table
    *   Else false.
    */
-  public function addUserRecord($user_id, $pluginId, $provider_user_id, $user_data) {
+  public function addUserRecord($user_id, $provider_user_id, $token, $user_data) {
     // Make sure we have everything we need.
-    if (!$user_id || !$pluginId || !$provider_user_id) {
+    if (!$user_id || !$this->pluginId || !$provider_user_id) {
       $this->loggerFactory
         ->get($this->getPluginId())
         ->error('Failed to add user record in social_auth entiy.
           User_id: @user_id, social_network_identifier: @social_network_identifier, provider_user_id : @provider_user_id ',
           [
             '@user_id' => $user_id,
-            '@social_network_identifier' => $pluginId,
+            '@social_network_identifier' => $this->pluginId,
             '@provider_user_id ' => $provider_user_id,
           ]);
 
@@ -381,8 +379,9 @@ class SocialAuthUserManager {
       // Add user record.
       $values = [
         'user_id' => $user_id,
-        'plugin_id' => $pluginId,
+        'plugin_id' => $this->pluginId,
         'provider_user_id' => $provider_user_id,
+        'token' => $token,
         'additional_data' => $user_data,
       ];
 
