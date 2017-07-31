@@ -15,7 +15,7 @@ accounts.
  * It also provides a block Social Auth Login which contains links to login
    users through the enabled social networks' module clients
 
- * Alternatively, site builders can place (and theme) a link to 
+ * Alternatively, site builders can place (and theme) a link to
    user/login/{social_network} wherever on the site. This path are added by the
    implementers. For instance Social Auth Facebook will add the path
    user/login/facebook
@@ -37,7 +37,7 @@ CONFIGURATION
 -------------
 
  * A table of implementers will be displayed at Administration » Configuration »
-   Social API Settings » User authentication. However, it will be empty as we 
+   Social API Settings » User authentication. However, it will be empty as we
    have not enabled an implementer yet.
 
  * You should install implementer modules to get this module start working.
@@ -53,6 +53,7 @@ MAINTAINERS
 
 Current maintainers:
  * gvso - https://www.drupal.org/u/gvso
+ * himanshu-dixit - https://www.drupal.org/u/himanshu-dixit
 
 Supporting organizations:
 
