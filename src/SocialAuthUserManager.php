@@ -175,7 +175,7 @@ class SocialAuthUserManager {
 
     // Checks if user has authenticated role and no record exist.
     if ($this->currentUser->isAuthenticated() && !$user_exist) {
-      return $this->addUserRecord($this->currentUser->id(), $this->pluginId, $provider_user_id, $token, $data);
+      return $this->addUserRecord($this->currentUser->id(), $provider_user_id, $token, $data);
     }
 
     // If User is not logged in, then load user by $user_exist.
@@ -195,7 +195,7 @@ class SocialAuthUserManager {
       // Check if User with same email account exists.
       if ($drupal_user) {
         // Add record for the same user.
-        $this->addUserRecord($drupal_user->id(), $this->pluginId, $provider_user_id, $token, $data);
+        $this->addUserRecord($drupal_user->id(), $provider_user_id, $token, $data);
 
         // Authenticates and redirect the user.
         return $this->authenticateExistingUser($drupal_user);
@@ -207,7 +207,7 @@ class SocialAuthUserManager {
     if ($drupal_user) {
 
       // If the new user could be registered.
-      $this->addUserRecord($drupal_user->id(), $this->pluginId, $provider_user_id, $token, $data);
+      $this->addUserRecord($drupal_user->id(), $provider_user_id, $token, $data);
 
       // Download profile picture for the newly created user.
       if ($picture_url) {
@@ -341,7 +341,7 @@ class SocialAuthUserManager {
       return FALSE;
     }
     $user_data = $storage->load(array_values($social_auth_user)[0]);
-    return $user_data->get('user_id')->getValue()[0]['value'];
+    return $user_data->get('user_id')->getValue()[0]["target_id"];
   }
 
   /**
