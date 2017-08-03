@@ -11,12 +11,4 @@ use Drupal\social_api\AuthManager\OAuth2ManagerInterface as BaseOAuth2ManagerInt
  */
 interface OAuth2ManagerInterface extends BaseOAuth2ManagerInterface {
 
-  /**
-   * Returns the user and related information.
-   *
-   * @return mixed
-   *   The user data.
-   */
-  public function getUserInfo();
-
 }
