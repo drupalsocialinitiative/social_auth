@@ -175,7 +175,9 @@ class SocialAuthUserManager {
 
     // Checks if user has authenticated role and no record exist.
     if ($this->currentUser->isAuthenticated() && !$user_exist) {
-      return $this->addUserRecord($this->currentUser->id(), $provider_user_id, $token, $data);
+      if ($this->addUserRecord($this->currentUser->id(), $provider_user_id, $token, $data)) {
+        return $this->getLoginPostPath();
+      }
     }
 
     // If User is not logged in, then load user by $user_exist.
@@ -283,10 +285,13 @@ class SocialAuthUserManager {
       if ($redirect) {
         return $redirect;
       }
-      else {
-        return $this->getLoginPostPath();
-      }
+
+      return $this->getLoginPostPath();
     }
+
+    drupal_set_message($this->t('You could not be authenticated. Contact site administrator.'), 'error');
+    $this->nullifySessionKeys();
+    return $this->redirect('user.login');
   }
 
   /**
@@ -588,9 +593,8 @@ class SocialAuthUserManager {
       // Route does not exist so just redirect to path.
       return new RedirectResponse(Url::fromUserInput($post_login)->toString());
     }
-    else {
-      return $this->redirect($post_login);
-    }
+
+    return $this->redirect($post_login);
   }
 
   /**
