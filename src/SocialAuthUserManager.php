@@ -639,11 +639,11 @@ class SocialAuthUserManager {
     $i = 1;
     $candidate = $base;
     while ($this->loadUserByProperty('name', $candidate)) {
-      $i++;
       // Calculate max length for $base and truncate if needed.
       $max_length_base = $max_length - strlen((string) $i) - 1;
       $base = Unicode::substr($base, 0, $max_length_base);
       $candidate = $base . ' ' . $i;
+      $i++;
     }
 
     // Trim leading and trailing whitespace.
