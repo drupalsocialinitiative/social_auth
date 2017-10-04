@@ -150,6 +150,16 @@ class SocialAuthUserManager {
   }
 
   /**
+   * Sets the destination parameter path for redirection after login.
+   *
+   * @param string $destination
+   *   The path to redirect to.
+   */
+  public function setDestination($destination) {
+    $this->dataHandler->set('login_destination', $destination);
+  }
+
+  /**
    * Creates and/or authenticates an user.
    *
    * @param string $name
@@ -587,6 +597,16 @@ class SocialAuthUserManager {
    *   Post Login Path to which the user would be redirected after login.
    */
   protected function getLoginPostPath() {
+    // Gets destination parameter previously stored in session.
+    $destination = $this->dataHandler->get('login_destination');
+    // If there was a destination parameter.
+    if ($destination) {
+      // Deletes the session key.
+      $this->dataHandler->set('login_destination', NULL);
+      // Redirects to the defined destination path.
+      return new RedirectResponse(Url::fromUri('base:' . $destination)->toString());
+    }
+
     $post_login = $this->configFactory->get('social_auth.settings')->get('post_login');
     $routes = $this->routeProvider->getRoutesByNames([$post_login]);
     if (empty($routes)) {
