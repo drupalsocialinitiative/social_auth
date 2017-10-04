@@ -10,13 +10,6 @@ use Drupal\social_api\Controller\SocialApiController;
 class SocialAuthController extends SocialApiController {
 
   /**
-   * {@inheritdoc}
-   */
-  public function integrations($type = 'social_auth') {
-    return parent::integrations($type);
-  }
-
-  /**
    * Sets the settings for the login button for the given social networking.
    *
    * @param string $module
