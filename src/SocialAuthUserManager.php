@@ -217,14 +217,14 @@ class SocialAuthUserManager {
     // If user was not already logged in or registered, create new user.
     $drupal_user = $this->createUser($name, $email);
     if ($drupal_user) {
-
-      // If the new user could be registered.
-      $this->addUserRecord($drupal_user->id(), $provider_user_id, $token, $data);
-
       // Download profile picture for the newly created user.
       if ($picture_url) {
         $this->setProfilePic($drupal_user, $picture_url, $provider_user_id);
       }
+
+      // If the new user could be registered.
+      $this->addUserRecord($drupal_user->id(), $provider_user_id, $token, $data);
+
       // Authenticates and redirect new user.
       return $this->authenticateNewUser($drupal_user);
     }
