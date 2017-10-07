@@ -3,6 +3,6 @@ social_auth.integrations:
   defaults:
     _controller: '\Drupal\social_auth\Controller\SocialAuthController::integrations'
     _title: 'User authentication'
-    type: 'social-auth'
+    type: 'social_auth'
   requirements:
     _permission: 'administer social api authentication'
