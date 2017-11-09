@@ -229,7 +229,6 @@ class SocialAuthUserManager {
       return $this->authenticateNewUser($drupal_user);
     }
 
-    drupal_set_message($this->t('You could not be authenticated, please contact the administrator'), 'error');
     $this->nullifySessionKeys();
     return $this->redirect('user.login');
   }
@@ -265,7 +264,7 @@ class SocialAuthUserManager {
     }
     else {
       $this->nullifySessionKeys();
-      drupal_set_message($this->t("Your account has not been approved yet or might have been canceled, please contact the administrator"), 'error');
+      drupal_set_message($this->t("Your account has not been approved yet or might have been canceled, please contact the administrator."), 'error');
       return $this->redirect('user.login');
     }
   }
@@ -282,7 +281,7 @@ class SocialAuthUserManager {
   public function authenticateNewUser(UserInterface $drupal_user) {
     // If the account needs admin approval.
     if ($this->isApprovalRequired()) {
-      drupal_set_message($this->t("Your account was created, but it needs administrator's approval"), 'warning');
+      drupal_set_message($this->t("Your account was created, but it needs administrator's approval."), 'warning');
       $this->nullifySessionKeys();
       return $this->redirect('user.login');
     }
@@ -387,7 +386,7 @@ class SocialAuthUserManager {
             '@social_network_identifier' => $this->pluginId,
             '@provider_user_id ' => $provider_user_id,
           ]);
-
+      drupal_set_message($this->t('You could not be authenticated, please contact the administrator.'), 'error');
       return FALSE;
     }
     else {
@@ -431,13 +430,11 @@ class SocialAuthUserManager {
     }
 
     // Check if site configuration allows new users to register.
-    if ($this->registrationBlocked()) {
+    if ($this->isRegistrationDisabled()) {
       $this->loggerFactory
         ->get($this->getPluginId())
-        ->warning('Failed to create user. User registration is disabled in Drupal account settings. Name: @name, email: @email.', ['@name' => $name, '@email' => $email]);
-
+        ->warning('Failed to create user. User registration is disabled. Name: @name, email: @email.', ['@name' => $name, '@email' => $email]);
       drupal_set_message($this->t('User registration is disabled, please contact the administrator.'), 'error');
-
       return FALSE;
     }
 
@@ -476,6 +473,7 @@ class SocialAuthUserManager {
         ->error('Could not create new user. Exception: @message', ['@message' => $ex->getMessage()]);
     }
 
+    drupal_set_message($this->t('You could not be authenticated, please contact the administrator.'), 'error');
     return FALSE;
   }
 
@@ -520,15 +518,16 @@ class SocialAuthUserManager {
   }
 
   /**
-   * Checks if user registration is blocked in Drupal account settings.
+   * Checks if user registration is disabled.
    *
    * @return bool
-   *   True if registration is blocked
-   *   False if registration is not blocked
+   *   True if registration is disabled
+   *   False if registration is not disabled
    */
-  protected function registrationBlocked() {
-    // Check if Drupal account registration settings is Administrators only.
-    if ($this->configFactory->get('user.settings')->get('register') == 'admin_only') {
+  protected function isRegistrationDisabled() {
+    // Check if Drupal account registration settings is Administrators only
+    // OR if it is disabled in Social Auth Settings.
+    if ($this->configFactory->get('user.settings')->get('register') == 'admin_only' || $this->configFactory->get('social_auth.settings')->get('user_allowed') == 'login') {
       return TRUE;
     }
 

@@ -92,6 +92,16 @@ class SocialAuthSettingsForm extends ConfigFormBase {
       '#default_value' => $social_auth_config->get('post_login'),
     ];
 
+    $form['social_auth']['user_allowed'] = [
+      '#type' => 'radios',
+      '#title' => $this->t('What can users do?'),
+      '#default_value' => $social_auth_config->get('user_allowed'),
+      '#options' => [
+        'register' => $this->t('Register and login'),
+        'login' => $this->t('Login only'),
+      ],
+    ];
+
     $form['social_auth']['redirect_user_form'] = [
       '#type' => 'checkbox',
       '#title' => $this->t('Redirect new users to Drupal user form'),
@@ -156,6 +166,7 @@ class SocialAuthSettingsForm extends ConfigFormBase {
     $values = $form_state->getValues();
     $this->config('social_auth.settings')
       ->set('post_login', $values['post_login'])
+      ->set('user_allowed', $values['user_allowed'])
       ->set('redirect_user_form', $values['redirect_user_form'])
       ->set('disable_admin_login', $values['disable_admin_login'])
       ->set('disabled_roles', $values['disabled_roles'])
