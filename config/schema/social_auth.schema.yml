@@ -15,7 +15,7 @@ social_auth.settings:
       type: string
       label: 'Drupal path where the user should be redirected after successful login'
     user_allowed:
-      type: array
+      type: string
       label: 'What can users do?'
     redirect_user_form:
       type: boolean
