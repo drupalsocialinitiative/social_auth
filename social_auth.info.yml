@@ -4,4 +4,4 @@ description: Allows login using different social networking services
 core: 8.x
 package: Social
 dependencies:
-  - social_api
+  - social_api (>= 8.x-2.x)
