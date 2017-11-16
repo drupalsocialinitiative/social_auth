@@ -31,6 +31,16 @@ use Drupal\Core\Entity\ContentEntityInterface;
 class SocialAuth extends ContentEntityBase implements ContentEntityInterface {
 
   /**
+   * Returns the Drupal user id.
+   *
+   * @return string
+   *   The user id.
+   */
+  public function getUserId() {
+    return $this->get('user_id')->getValue()[0]['target_id'];
+  }
+
+  /**
    * Sets the access token.
    *
    * @param string $token

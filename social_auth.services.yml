@@ -11,7 +11,6 @@ services:
       - '@transliteration'
       - '@language_manager'
       - '@router.route_provider'
-      - '@entity.query'
       - '@current_user'
       - '@social_auth.social_auth_data_handler'
 

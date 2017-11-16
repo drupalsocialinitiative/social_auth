@@ -2,7 +2,7 @@
 
 namespace Drupal\social_auth\Event;
 
-use Drupal\user\Entity\User;
+use Drupal\user\UserInterface;
 use Symfony\Component\EventDispatcher\Event;
 
 /**
@@ -29,12 +29,12 @@ class SocialAuthUserEvent extends Event {
   /**
    * Constructs a new SocialAuthEvent.
    *
-   * @param \Drupal\user\Entity\User $user
+   * @param \Drupal\user\UserInterface $user
    *   The user.
    * @param string $plugin_id
    *   The plugin Id dispatching this event.
    */
-  public function __construct(User $user, $plugin_id) {
+  public function __construct(UserInterface $user, $plugin_id) {
     $this->user = $user;
     $this->pluginId = $plugin_id;
   }

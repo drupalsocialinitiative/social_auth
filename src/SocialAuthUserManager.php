@@ -22,7 +22,6 @@ use Drupal\social_auth\Event\SocialAuthUserEvent;
 use Drupal\social_auth\Event\SocialAuthUserFieldsEvent;
 use Drupal\user\Entity\User;
 use Drupal\user\UserInterface;
-use Drupal\Core\Entity\Query\QueryFactory;
 use Drupal\Core\Session\AccountProxy;
 
 /**
@@ -41,7 +40,6 @@ class SocialAuthUserManager {
   protected $transliteration;
   protected $languageManager;
   protected $routeProvider;
-  protected $entityQuery;
   protected $currentUser;
 
   /**
@@ -87,14 +85,23 @@ class SocialAuthUserManager {
    *   Used to get current UI language.
    * @param \Drupal\Core\Routing\RouteProviderInterface $route_provider
    *   Used to check if route path exists.
-   * @param \Drupal\Core\Entity\Query\QueryFactory $entityQuery
-   *   Used to get entity query object for this entity type.
    * @param \Drupal\Core\Session\AccountProxy $current_user
    *   Used to get current active user.
    * @param \Drupal\social_auth\SocialAuthDataHandler $social_auth_data_handler
    *   Class to interact with session.
    */
-  public function __construct(ConfigFactoryInterface $config_factory, LoggerChannelFactoryInterface $logger_factory, EventDispatcherInterface $event_dispatcher, EntityTypeManagerInterface $entity_type_manager, EntityFieldManagerInterface $entity_field_manager, Token $token, PhpTransliteration $transliteration, LanguageManagerInterface $language_manager, RouteProviderInterface $route_provider, QueryFactory $entityQuery, AccountProxy $current_user, SocialAuthDataHandler $social_auth_data_handler) {
+  public function __construct(ConfigFactoryInterface $config_factory,
+                              LoggerChannelFactoryInterface $logger_factory,
+                              EventDispatcherInterface $event_dispatcher,
+                              EntityTypeManagerInterface $entity_type_manager,
+                              EntityFieldManagerInterface $entity_field_manager,
+                              Token $token,
+                              PhpTransliteration $transliteration,
+                              LanguageManagerInterface $language_manager,
+                              RouteProviderInterface $route_provider,
+                              AccountProxy $current_user,
+                              SocialAuthDataHandler $social_auth_data_handler) {
+
     $this->configFactory      = $config_factory;
     $this->loggerFactory      = $logger_factory;
     $this->eventDispatcher    = $event_dispatcher;
@@ -104,7 +111,6 @@ class SocialAuthUserManager {
     $this->transliteration    = $transliteration;
     $this->languageManager    = $language_manager;
     $this->routeProvider      = $route_provider;
-    $this->entityQuery        = $entityQuery;
     $this->currentUser        = $current_user;
     $this->dataHandler        = $social_auth_data_handler;
 
@@ -190,7 +196,7 @@ class SocialAuthUserManager {
       }
     }
 
-    // If User is not logged in, then load user by $user_exist.
+    // If user is not logged in, then load user through provider.
     if ($user_exist) {
       // Load the user by their Drupal:user_id.
       $drupal_user = $this->loadUserByProperty('uid', $user_exist);
@@ -343,19 +349,19 @@ class SocialAuthUserManager {
    *   Else return Drupal User Id associate with the account.
    */
   public function checkIfUserExists($provider_user_id) {
-    $storage = $this->entityTypeManager->getStorage('social_auth');
-    // Perform query on social auth entity.
-    $query = $this->entityQuery->get('social_auth');
+    $social_auth_user = $this->entityTypeManager
+      ->getStorage('social_auth')
+      ->loadByProperties([
+        'plugin_id' => $this->pluginId,
+        'provider_user_id' => $provider_user_id,
+      ]);
 
-    // Check If user exist by using type and provider_user_id .
-    $social_auth_user = $query->condition('plugin_id', $this->pluginId)
-      ->condition('provider_user_id', $provider_user_id)
-      ->execute();
-    if (!$social_auth_user) {
-      return FALSE;
+    if (!empty($social_auth_user)) {
+      return current($social_auth_user)->getUserId();
     }
-    $user_data = $storage->load(array_values($social_auth_user)[0]);
-    return $user_data->get('user_id')->getValue()[0]["target_id"];
+
+    // If user was not found, return FALSE.
+    return FALSE;
   }
 
   /**
@@ -480,14 +486,14 @@ class SocialAuthUserManager {
   /**
    * Logs the user in.
    *
-   * @param \Drupal\user\Entity\User $drupal_user
+   * @param \Drupal\user\UserInterface $drupal_user
    *   User object.
    *
    * @return bool
    *   True if login was successful
    *   False if the login was blocked
    */
-  public function loginUser(User $drupal_user) {
+  public function loginUser(UserInterface $drupal_user) {
     // Check that the account is active and log the user in.
     if ($drupal_user->isActive()) {
       $this->userLoginFinalize($drupal_user);
@@ -705,7 +711,8 @@ class SocialAuthUserManager {
   public function setProfilePic(User $drupal_user, $picture_url, $id) {
     // Try to download the profile picture and add it to user fields.
     if ($this->userPictureEnabled()) {
-      if ($file = $this->downloadProfilePic($picture_url, $id)) {
+      $file = $this->downloadProfilePic($picture_url, $id);
+      if ($file) {
         $drupal_user->set('user_picture', $file->id());
         $drupal_user->save();
         return TRUE;
