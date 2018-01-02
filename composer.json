@@ -10,9 +10,6 @@
         "issues": "https://www.drupal.org/project/issues/social_auth",
         "source": "http://cgit.drupalcode.org/social_auth"
     },
-    "require" : {
-        "league/oauth2-client": "~2.0"
-    },
     "authors": [
         {
             "name": "Getulio Valentin Sánchez (gvso)",
