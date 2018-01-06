@@ -48,6 +48,15 @@ CONFIGURATION
  * You can find a more comprehensive guide in the Social Auth documentation
    (https://www.drupal.org/node/2763731)
 
+UPDATES IN V2
+-------------
+ * An important aspect is that Social Auth now has its own content entity, so
+   data can be stored in database.
+
+ * Unique IDs are now fetched from providers and are associated with a Drupal
+   user. This allows a user to have multiple accounts from different providers
+   associated to the same Drupal account.
+
 MAINTAINERS
 -----------
 
