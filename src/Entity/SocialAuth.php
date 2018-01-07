@@ -18,13 +18,10 @@ use Drupal\Core\Entity\ContentEntityInterface;
  *   base_table = "social_auth",
  *   entity_keys = {
  *     "id" = "id",
+ *     "uuid" = "uuid",
  *     "user_id" = "user_id",
  *     "plugin_id" = "plugin_id",
- *     "provider_user_id" = "provider_user_id",
- *     "created" = "created",
- *     "changed" = "changed",
- *     "token" = "token",
- *     "additional_data" = "additional_data"
+ *     "provider_user_id" = "provider_user_id"
  *   },
  * )
  */
@@ -168,16 +165,6 @@ class SocialAuth extends ContentEntityBase implements ContentEntityInterface {
       ->setLabel(t('Provider user ID'))
       ->setDescription(t('The unique user ID in the provider.'));
 
-    // User creation time.
-    $fields['created'] = BaseFieldDefinition::create('created')
-      ->setLabel(t('Created'))
-      ->setDescription(t('The time that the entity was created.'));
-
-    // User modified time.
-    $fields['changed'] = BaseFieldDefinition::create('changed')
-      ->setLabel(t('Changed'))
-      ->setDescription(t('The time that the entity was last edited.'));
-
     // Token received after user authentication.
     $fields['token'] = BaseFieldDefinition::create('string_long')
       ->setLabel(t('Token received after user authentication'))
@@ -187,6 +174,16 @@ class SocialAuth extends ContentEntityBase implements ContentEntityInterface {
     $fields['additional_data'] = BaseFieldDefinition::create('string_long')
       ->setLabel(t('Additional data'))
       ->setDescription(t('The additional data kept for future use.'));
+
+    // User creation time.
+    $fields['created'] = BaseFieldDefinition::create('created')
+      ->setLabel(t('Created'))
+      ->setDescription(t('The time that the entity was created.'));
+
+    // User modified time.
+    $fields['changed'] = BaseFieldDefinition::create('changed')
+      ->setLabel(t('Changed'))
+      ->setDescription(t('The time that the entity was last edited.'));
 
     return $fields;
   }

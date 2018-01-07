@@ -93,3 +93,45 @@ function social_auth_update_8201() {
     $schema->createTable('social_auth', $spec);
   }
 }
+
+/**
+ * Update fields' properties.
+ *
+ * The updating fields are uuid, created, changed, token, and additional_data.
+ */
+function social_auth_update_8202() {
+  $schema = Database::getConnection()->schema();
+
+  $specs = [
+    'uuid' => [
+      'type' => 'varchar_ascii',
+      'length' => 128,
+      'not null' => TRUE,
+    ],
+    'created' => [
+      'type' => 'int',
+      'length' => 11,
+      'not null' => FALSE,
+    ],
+    'changed' => [
+      'type' => 'int',
+      'length' => 11,
+      'not null' => FALSE,
+    ],
+    'token' => [
+      'type' => 'text',
+      'not null' => FALSE,
+      'size' => 'big',
+    ],
+    'additional_data' => [
+      'type' => 'text',
+      'not null' => FALSE,
+      'size' => 'big',
+    ],
+  ];
+
+  foreach ($specs as $field => $spec) {
+    $schema->changeField('social_auth', $field, $field, $spec);
+  }
+
+}
