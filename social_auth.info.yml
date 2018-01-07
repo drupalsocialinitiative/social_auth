@@ -1,7 +1,8 @@
-name: Social API Auth
+name: Social Auth
 type: module
 description: Allows login using different social networking services
 core: 8.x
 package: Social
+version: 8.x-2.x
 dependencies:
   - social_api (>= 8.x-2.x)
