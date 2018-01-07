@@ -93,3 +93,18 @@ function social_auth_update_8201() {
     $schema->createTable('social_auth', $spec);
   }
 }
+
+/**
+ * Set additional_data field as not required.
+ */
+function social_auth_update_8202() {
+  $spec = [
+    'type' => 'text',
+    'not null' => FALSE,
+    'size' => 'big',
+  ];
+
+  $schema = Database::getConnection()->schema();
+
+  $schema->changeField('social_auth', 'additional_data', 'additional_data', $spec);
+}
