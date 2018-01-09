@@ -12,9 +12,9 @@ services:
       - '@language_manager'
       - '@router.route_provider'
       - '@current_user'
-      - '@social_auth.social_auth_data_handler'
+      - '@social_auth.data_handler'
 
-  social_auth.social_auth_data_handler:
+  social_auth.data_handler:
     class: Drupal\social_auth\SocialAuthDataHandler
     arguments:
       - '@session'
