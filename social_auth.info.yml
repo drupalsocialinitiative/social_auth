@@ -6,4 +6,4 @@ package: Social
 version: 8.x-2.x
 configure: social_auth.integrations
 dependencies:
-  - social_api (>= 8.x-2.x)
+  - social_api:social_api (>= 8.x-2.x)
