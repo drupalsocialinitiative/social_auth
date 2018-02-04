@@ -658,6 +658,8 @@ class SocialAuthUserManager {
   protected function generateUniqueUsername($name) {
     $max_length = 60;
     $name = Unicode::substr($name, 0, $max_length);
+    $name = str_replace(' ', '', $name);
+    $name = strtolower($name);
 
     // Add a trailing number if needed to make username unique.
     $base = $name;
@@ -667,7 +669,7 @@ class SocialAuthUserManager {
       // Calculate max length for $base and truncate if needed.
       $max_length_base = $max_length - strlen((string) $i) - 1;
       $base = Unicode::substr($base, 0, $max_length_base);
-      $candidate = $base . ' ' . $i;
+      $candidate = $base . $i;
       $i++;
     }
 
