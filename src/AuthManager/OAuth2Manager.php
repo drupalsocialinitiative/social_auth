@@ -45,10 +45,31 @@ abstract class OAuth2Manager extends BaseOAuth2Manager implements OAuth2ManagerI
   }
 
   /**
-   * Gets the scopes defined in the settings form.
-   *
-   * @return string
-   *   Data points separated by comma.
+   * {@inheritdoc}
+   */
+  public function getExtraDetails() {
+    $endpoints = $this->getEndPoints();
+
+    // Store the data mapped with endpoints define in settings.
+    $data = [];
+
+    if ($endpoints) {
+      // Iterate through api calls define in settings and retrieve them.
+      foreach (explode(PHP_EOL, $endpoints) as $endpoint) {
+        // Endpoint is set as path/to/endpoint|name.
+        $parts = explode('|', $endpoint);
+        $call[$parts[1]] = $this->requestEndPoint($parts[0]);
+        array_push($data, $call);
+      }
+
+      return json_encode($data);
+    }
+
+    return NULL;
+  }
+
+  /**
+   * {@inheritdoc}
    */
   public function getScopes() {
     if ($this->scopes === FALSE) {
@@ -58,10 +79,7 @@ abstract class OAuth2Manager extends BaseOAuth2Manager implements OAuth2ManagerI
   }
 
   /**
-   * Gets the API endpoints to be requested.
-   *
-   * @return string
-   *   API endpoints separated in different lines.
+   * {@inheritdoc}
    */
   public function getEndPoints() {
     if ($this->endPoints === FALSE) {
