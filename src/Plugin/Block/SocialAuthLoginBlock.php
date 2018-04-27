@@ -66,14 +66,4 @@ class SocialAuthLoginBlock extends BlockBase implements ContainerFactoryPluginIn
     ];
   }
 
-  /**
-   * {@inheritdoc}
-   */
-  public function blockAccess(AccountInterface $account) {
-    if ($account->isAnonymous()) {
-      return AccessResult::allowed();
-    }
-    return AccessResult::forbidden();
-  }
-
 }
