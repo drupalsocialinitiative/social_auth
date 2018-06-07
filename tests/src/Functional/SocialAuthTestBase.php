@@ -6,11 +6,9 @@ use Drupal\Core\Url;
 use Drupal\Tests\BrowserTestBase;
 
 /**
- * Provides base test coverage for Social Auth.
- *
- * @group social_auth
+ * Defines a base class for testing Social Auth implementers.
  */
-class SocialAuthBaseTest extends BrowserTestBase {
+class SocialAuthTestBase extends BrowserTestBase {
 
   /**
    * Modules to enable.
