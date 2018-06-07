@@ -8,7 +8,7 @@ use Drupal\Tests\BrowserTestBase;
 /**
  * Defines a base class for testing Social Auth implementers.
  */
-class SocialAuthTestBase extends BrowserTestBase {
+abstract class SocialAuthTestBase extends BrowserTestBase {
 
   /**
    * Modules to enable.
