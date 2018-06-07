@@ -22,7 +22,7 @@ use Drupal\social_auth\Event\SocialAuthUserEvent;
 use Drupal\social_auth\Event\SocialAuthUserFieldsEvent;
 use Drupal\user\Entity\User;
 use Drupal\user\UserInterface;
-use Drupal\Core\Session\AccountProxy;
+use Drupal\Core\Session\AccountProxyInterface;
 
 /**
  * Contains all logic that is related to Drupal user management.
@@ -40,6 +40,12 @@ class SocialAuthUserManager {
   protected $transliteration;
   protected $languageManager;
   protected $routeProvider;
+
+  /**
+   * The current user.
+   *
+   * @var \Drupal\Core\Session\AccountProxyInterface
+   */
   protected $currentUser;
 
   /**
@@ -85,7 +91,7 @@ class SocialAuthUserManager {
    *   Used to get current UI language.
    * @param \Drupal\Core\Routing\RouteProviderInterface $route_provider
    *   Used to check if route path exists.
-   * @param \Drupal\Core\Session\AccountProxy $current_user
+   * @param \Drupal\Core\Session\AccountProxyInterface $current_user
    *   Used to get current active user.
    * @param \Drupal\social_auth\SocialAuthDataHandler $social_auth_data_handler
    *   Class to interact with session.
@@ -99,7 +105,7 @@ class SocialAuthUserManager {
                               PhpTransliteration $transliteration,
                               LanguageManagerInterface $language_manager,
                               RouteProviderInterface $route_provider,
-                              AccountProxy $current_user,
+                              AccountProxyInterface $current_user,
                               SocialAuthDataHandler $social_auth_data_handler) {
 
     $this->configFactory      = $config_factory;
