@@ -7,7 +7,7 @@ namespace Drupal\Tests\social_auth\Functional;
  *
  * @group social_auth
  */
-class SocialAuthLoginBlockTest extends SocialAuthBaseTest {
+class SocialAuthLoginBlockTest extends SocialAuthTestBase {
 
   /**
    * Test that the block is showing up.
