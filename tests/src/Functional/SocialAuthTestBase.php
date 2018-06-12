@@ -3,12 +3,12 @@
 namespace Drupal\Tests\social_auth\Functional;
 
 use Drupal\Core\Url;
-use Drupal\Tests\BrowserTestBase;
+use Drupal\Tests\social_api\Functional\SocialApiTestBase;
 
 /**
  * Defines a base class for testing Social Auth implementers.
  */
-abstract class SocialAuthTestBase extends BrowserTestBase {
+abstract class SocialAuthTestBase extends SocialApiTestBase {
 
   /**
    * Modules to enable.
@@ -16,13 +16,6 @@ abstract class SocialAuthTestBase extends BrowserTestBase {
    * @var array
    */
   public static $modules = ['block', 'social_auth'];
-
-  /**
-   * A test user.
-   *
-   * @var \Drupal\user\UserInterface
-   */
-  protected $user;
 
   /**
    * The block entity.
@@ -39,19 +32,13 @@ abstract class SocialAuthTestBase extends BrowserTestBase {
   protected $authRootPath = '/user/login/';
 
   /**
-   * The machine name of the provider the module works with.
-   *
-   * @var null|string
-   */
-  protected $provider = NULL;
-
-  /**
    * {@inheritdoc}
    */
   protected function setUp() {
-    parent::setUp();
 
-    $this->user = $this->drupalCreateUser();
+    $this->adminUserPermissions = ['administer social api authentication'];
+
+    parent::setUp();
 
     $this->socialAuthLoginBlock = $this->drupalPlaceBlock('social_auth_login', [
       'label' => 'Social Auth Login',
@@ -74,7 +61,7 @@ abstract class SocialAuthTestBase extends BrowserTestBase {
     }
 
     // Test for an authenticated user.
-    $this->drupalLogin($this->user);
+    $this->drupalLogin($this->noPermsUser);
     $this->drupalGet(Url::fromRoute('<front>'));
     $this->assertSession()->pageTextContains($this->socialAuthLoginBlock->label());
 
