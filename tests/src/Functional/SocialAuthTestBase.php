@@ -33,6 +33,8 @@ abstract class SocialAuthTestBase extends SocialApiTestBase {
 
   /**
    * {@inheritdoc}
+   *
+   * @throws \Drupal\Core\Entity\EntityStorageException
    */
   protected function setUp() {
 
@@ -50,6 +52,8 @@ abstract class SocialAuthTestBase extends SocialApiTestBase {
 
   /**
    * Test if link to provider exists in login block.
+   *
+   * @throws \Behat\Mink\Exception\ResponseTextException
    */
   protected function checkLinkToProviderExists() {
     // Test for a non-authenticated user.
