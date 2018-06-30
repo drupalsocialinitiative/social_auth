@@ -135,7 +135,6 @@ class SocialAuthUserManager {
    */
   public function setPluginId($plugin_id) {
     $this->pluginId = $plugin_id;
-    $this->dataHandler->setSessionPrefix($plugin_id);
   }
 
   /**
