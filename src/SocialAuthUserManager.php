@@ -772,7 +772,7 @@ class SocialAuthUserManager {
     }
 
     // Generate filename and transliterate.
-    $filename = $this->transliteration->transliterate($this->getPluginId() . '_' . $id . '.jpg', 'en', '_', 50);
+    $filename = $this->transliteration->transliterate($this->getPluginId() . '_' . $id, 'en', '_', 50) . '.jpg';
 
     $destination = $directory . DIRECTORY_SEPARATOR . $filename;
 
