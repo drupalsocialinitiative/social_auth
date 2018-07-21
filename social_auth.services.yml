@@ -1,18 +1,28 @@
 services:
-  social_auth.user_manager:
-    class: Drupal\social_auth\SocialAuthUserManager
+  social_auth.user_authenticator:
+    class: Drupal\social_auth\User\UserAuthenticator
     arguments:
-      - '@config.factory'
+      - '@current_user'
+      - '@messenger'
       - '@logger.factory'
+      - '@social_auth.user_manager'
+      - '@social_auth.data_handler'
+      - '@config.factory'
+      - '@router.route_provider'
       - '@event_dispatcher'
+
+  social_auth.user_manager:
+    class: Drupal\social_auth\User\UserManager
+    arguments:
       - '@entity_type.manager'
+      - '@messenger'
+      - '@logger.factory'
+      - '@config.factory'
       - '@entity_field.manager'
-      - '@token'
       - '@transliteration'
       - '@language_manager'
-      - '@router.route_provider'
-      - '@current_user'
-      - '@social_auth.data_handler'
+      - '@event_dispatcher'
+      - '@token'
 
   social_auth.data_handler:
     class: Drupal\social_auth\SocialAuthDataHandler

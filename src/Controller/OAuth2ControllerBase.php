@@ -1,6 +1,5 @@
 <?php
 
-
 namespace Drupal\social_auth\Controller;
 
 use Drupal\Component\Plugin\Exception\PluginException;
@@ -10,13 +9,13 @@ use Drupal\Core\Routing\TrustedRedirectResponse;
 use Drupal\social_api\Plugin\NetworkManager;
 use Drupal\social_auth\AuthManager\OAuth2ManagerInterface;
 use Drupal\social_auth\SocialAuthDataHandler;
-use Drupal\social_auth\SocialAuthUserManager;
+use Drupal\social_auth\User\UserAuthenticator;
 use Symfony\Component\HttpFoundation\RequestStack;
 
 /**
  * Handle responses for Social Auth implementer controllers.
  */
-class SocialAuthOAuth2ControllerBase extends ControllerBase {
+class OAuth2ControllerBase extends ControllerBase {
 
   /**
    * The Messenger service.
@@ -33,11 +32,11 @@ class SocialAuthOAuth2ControllerBase extends ControllerBase {
   protected $networkManager;
 
   /**
-   * The user manager.
+   * The Social Auth user authenticator..
    *
-   * @var \Drupal\social_auth\SocialAuthUserManager
+   * @var \Drupal\social_auth\User\UserAuthenticator
    */
-  protected $userManager;
+  protected $userAuthenticator;
 
   /**
    * The provider authentication manager.
@@ -54,7 +53,7 @@ class SocialAuthOAuth2ControllerBase extends ControllerBase {
   protected $request;
 
   /**
-   * The Social Auth Data Handler.
+   * The Social Auth data handler.
    *
    * @var \Drupal\social_auth\SocialAuthDataHandler
    */
@@ -85,8 +84,8 @@ class SocialAuthOAuth2ControllerBase extends ControllerBase {
    *   The messenger service.
    * @param \Drupal\social_api\Plugin\NetworkManager $network_manager
    *   Used to get an instance of social_auth_google network plugin.
-   * @param \Drupal\social_auth\SocialAuthUserManager $user_manager
-   *   Manages user login/registration.
+   * @param \Drupal\social_auth\User\UserAuthenticator $user_authenticator
+   *   Used to manage user authentication/registration.
    * @param \Drupal\social_auth\AuthManager\OAuth2ManagerInterface $provider_manager
    *   Used to manage authentication methods.
    * @param \Symfony\Component\HttpFoundation\RequestStack $request
@@ -98,7 +97,7 @@ class SocialAuthOAuth2ControllerBase extends ControllerBase {
                               $plugin_id,
                               MessengerInterface $messenger,
                               NetworkManager $network_manager,
-                              SocialAuthUserManager $user_manager,
+                              UserAuthenticator $user_authenticator,
                               OAuth2ManagerInterface $provider_manager,
                               RequestStack $request,
                               SocialAuthDataHandler $data_handler) {
@@ -107,19 +106,19 @@ class SocialAuthOAuth2ControllerBase extends ControllerBase {
     $this->pluginId = $plugin_id;
     $this->messenger = $messenger;
     $this->networkManager = $network_manager;
-    $this->userManager = $user_manager;
+    $this->userAuthenticator = $user_authenticator;
     $this->providerManager = $provider_manager;
     $this->request = $request;
     $this->dataHandler = $data_handler;
 
-    // Sets the plugin id in user manager.
-    $this->userManager->setPluginId($plugin_id);
+    // Sets the plugin id in user authenticator.
+    $this->userAuthenticator->setPluginId($plugin_id);
 
     // Sets the session prefix.
     $this->dataHandler->setSessionPrefix($plugin_id);
 
     // Sets the session keys to nullify if user could not logged in.
-    $this->userManager->setSessionKeysToNullify(['access_token', 'oauth2state']);
+    $this->userAuthenticator->setSessionKeysToNullify(['access_token', 'oauth2state']);
   }
 
   /**
@@ -143,7 +142,7 @@ class SocialAuthOAuth2ControllerBase extends ControllerBase {
       $destination = $this->request->getCurrentRequest()->get('destination');
 
       if ($destination) {
-        $this->userManager->setDestination($destination);
+        $this->userAuthenticator->setDestination($destination);
       }
 
       // Provider service was returned, inject it to $providerManager.
@@ -158,7 +157,7 @@ class SocialAuthOAuth2ControllerBase extends ControllerBase {
       return new TrustedRedirectResponse($auth_url);
     }
     catch (PluginException $exception) {
-      $this->messenger->addError('There has been an error when creating plugin');
+      $this->messenger->addError('There has been an error when creating plugin.');
 
       return $this->redirect('user.login');
     }
@@ -189,8 +188,8 @@ class SocialAuthOAuth2ControllerBase extends ControllerBase {
       $retrievedState = $this->request->getCurrentRequest()->query->get('state');
 
       if (empty($retrievedState) || ($retrievedState !== $state)) {
-        $this->userManager->nullifySessionKeys();
-        $this->messenger->addError('Login failed. Unvalid OAuth2 state.');
+        $this->userAuthenticator->nullifySessionKeys();
+        $this->messenger->addError('Login failed. Invalid OAuth2 state.');
 
         return NULL;
       }
