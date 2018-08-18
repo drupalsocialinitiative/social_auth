@@ -5,6 +5,8 @@
  * Allows login using different social networking services.
  */
 
+use Drupal\Core\Entity\EntityInterface;
+
 /**
  * Implements hook_theme().
  */
@@ -25,4 +27,32 @@ function social_auth_preprocess_login_with(&$variables) {
     $variables['destination'] = $request->query->get('destination');
   }
   $variables['base_path'] = base_path();
+}
+
+/**
+ * Implements hook_ENTITY_TYPE_delete().
+ */
+function social_auth_user_delete(EntityInterface $account) {
+
+  try {
+    $storage = \Drupal::entityTypeManager()
+      ->getStorage('social_auth');
+
+    /* @var \Drupal\social_auth\Entity\SocialAuth[] $socialAuthUser */
+    $users = $storage->loadByProperties([
+      'user_id' => $account->id(),
+    ]);
+
+    if ($users) {
+      $storage->delete($users);
+    }
+
+    $storage->resetCache([$account->id()]);
+  }
+  catch (\Exception $e) {
+    \Drupal::logger('social_auth')
+      ->error('Could not delete Social Auth users for user @uid', [
+        '@uid' => $account->id(),
+      ]);
+  }
 }

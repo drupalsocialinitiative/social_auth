@@ -39,6 +39,7 @@ abstract class SocialAuthTestBase extends SocialApiTestBase {
   protected function setUp() {
 
     $this->adminUserPermissions = ['administer social api authentication'];
+    $this->moduleType = 'social-auth';
 
     parent::setUp();
 
