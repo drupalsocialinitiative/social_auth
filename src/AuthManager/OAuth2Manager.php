@@ -50,16 +50,16 @@ abstract class OAuth2Manager extends BaseOAuth2Manager implements OAuth2ManagerI
   public function getExtraDetails() {
     $endpoints = $this->getEndPoints();
 
-    // Store the data mapped with endpoints define in settings.
+    // Stores the data mapped with endpoints define in settings.
     $data = [];
 
     if ($endpoints) {
-      // Iterate through api calls define in settings and retrieve them.
+      // Iterates through endpoints define in settings and retrieves them.
       foreach (explode(PHP_EOL, $endpoints) as $endpoint) {
         // Endpoint is set as path/to/endpoint|name.
         $parts = explode('|', $endpoint);
-        $call[$parts[1]] = $this->requestEndPoint($parts[0]);
-        array_push($data, $call);
+
+        $data[$parts[1]] = $this->requestEndPoint($parts[0]);
       }
 
       return json_encode($data);
@@ -75,6 +75,7 @@ abstract class OAuth2Manager extends BaseOAuth2Manager implements OAuth2ManagerI
     if ($this->scopes === FALSE) {
       $this->scopes = $this->settings->get('scopes');
     }
+
     return $this->scopes;
   }
 
@@ -85,6 +86,7 @@ abstract class OAuth2Manager extends BaseOAuth2Manager implements OAuth2ManagerI
     if ($this->endPoints === FALSE) {
       $this->endPoints = $this->settings->get('endpoints');
     }
+
     return $this->endPoints;
   }
 

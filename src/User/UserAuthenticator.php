@@ -112,10 +112,10 @@ class UserAuthenticator extends SocialApiUserAuthenticator {
    */
   public function authenticateUser($name, $email, $provider_user_id, $token, $picture_url = FALSE, $data = '') {
 
-    // Checks for record in social _auth entity.
+    // Checks for record in Social Auth entity.
     $user_id = $this->userManager->getDrupalUserId($provider_user_id);
 
-    // If use is already authenticated.
+    // If user is already authenticated.
     if ($this->currentUser->isAuthenticated()) {
 
       // If no record for provider exists.
