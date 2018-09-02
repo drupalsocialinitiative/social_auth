@@ -154,7 +154,14 @@ class OAuth2ControllerBase extends ControllerBase {
       $state = $this->providerManager->getState();
       $this->dataHandler->set('oauth2state', $state);
 
-      return new TrustedRedirectResponse($auth_url);
+      // Forces session to be saved before redirection.
+      $this->dataHandler->save();
+
+      $response = new TrustedRedirectResponse($auth_url);
+
+      $response->send();
+
+      return $response;
     }
     catch (PluginException $exception) {
       $this->messenger->addError('There has been an error when creating plugin.');
