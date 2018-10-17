@@ -134,7 +134,7 @@ class OAuth2ControllerBase extends ControllerBase {
 
       // If provider client could not be obtained.
       if (!$client) {
-        $this->messenger->addError($this->module . ' not configured properly. Contact site administrator.');
+        $this->messenger->addError($this->t('%module not configured properly. Contact site administrator.', ['%module' => $this->module]));
         return $this->redirect('user.login');
       }
 
@@ -164,7 +164,7 @@ class OAuth2ControllerBase extends ControllerBase {
       return $response;
     }
     catch (PluginException $exception) {
-      $this->messenger->addError('There has been an error when creating plugin.');
+      $this->messenger->addError($this->t('There has been an error when creating plugin.'));
 
       return $this->redirect('user.login');
     }
@@ -184,7 +184,7 @@ class OAuth2ControllerBase extends ControllerBase {
 
       // If provider client could not be obtained.
       if (!$client) {
-        $this->messenger->addError($this->module . ' not configured properly. Contact site administrator.');
+        $this->messenger->addError($this->t('%module not configured properly. Contact site administrator.', ['%module' => $this->module]));
 
         return NULL;
       }
@@ -196,7 +196,7 @@ class OAuth2ControllerBase extends ControllerBase {
 
       if (empty($retrievedState) || ($retrievedState !== $state)) {
         $this->userAuthenticator->nullifySessionKeys();
-        $this->messenger->addError('Login failed. Invalid OAuth2 state.');
+        $this->messenger->addError($this->t('Login failed. Invalid OAuth2 state.'));
 
         return NULL;
       }
@@ -208,7 +208,7 @@ class OAuth2ControllerBase extends ControllerBase {
 
       // Gets user's info from provider.
       if (!$profile = $this->providerManager->getUserInfo()) {
-        $this->messenger->addError('Login failed, could not load user profile. Contact site administrator.');
+        $this->messenger->addError($this->t('Login failed, could not load user profile. Contact site administrator.'));
 
         return NULL;
       }
@@ -217,7 +217,7 @@ class OAuth2ControllerBase extends ControllerBase {
 
     }
     catch (PluginException $exception) {
-      $this->messenger->addError('There has been an error when creating plugin.');
+      $this->messenger->addError($this->t('There has been an error when creating plugin.'));
 
       return NULL;
     }

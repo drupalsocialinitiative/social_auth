@@ -168,7 +168,7 @@ class UserManager extends SocialApiUserManager {
         ->get($this->getPluginId())
         ->warning('Failed to create user. User registration is disabled. Name: @name, email: @email.', ['@name' => $name, '@email' => $email]);
 
-      $this->messenger->addError('User registration is disabled, please contact the administrator.');
+      $this->messenger->addError($this->t('User registration is disabled, please contact the administrator.'));
 
       return FALSE;
     }
@@ -207,7 +207,7 @@ class UserManager extends SocialApiUserManager {
         ->error('Could not create new user. Exception: @message', ['@message' => $ex->getMessage()]);
     }
 
-    $this->messenger->addError('You could not be authenticated, please contact the administrator.');
+    $this->messenger->addError($this->t('You could not be authenticated, please contact the administrator.'));
     return FALSE;
   }
 
@@ -240,7 +240,7 @@ class UserManager extends SocialApiUserManager {
             '@provider_user_id ' => $provider_user_id,
           ]);
 
-      $this->messenger->addError('You could not be authenticated, please contact the administrator.');
+      $this->messenger->addError($this->t('You could not be authenticated, please contact the administrator.'));
 
       return FALSE;
     }
@@ -266,7 +266,7 @@ class UserManager extends SocialApiUserManager {
           ->error('Failed to add user record in Social Auth entity.
             Exception: @message', ['@message' => $ex->getMessage()]);
 
-        $this->messenger->addError('You could not be authenticated, please contact the administrator.');
+        $this->messenger->addError($this->t('You could not be authenticated, please contact the administrator.'));
 
         return FALSE;
       }

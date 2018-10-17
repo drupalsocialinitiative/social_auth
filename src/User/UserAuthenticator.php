@@ -170,7 +170,7 @@ class UserAuthenticator extends SocialApiUserAuthenticator {
       return;
     }
 
-    $this->messenger->addError('New provider could not be associated.');
+    $this->messenger->addError($this->t('New provider could not be associated.'));
     $this->response = $this->getLoginFormRedirection();
   }
 
@@ -258,7 +258,7 @@ class UserAuthenticator extends SocialApiUserAuthenticator {
     // If Admin (user 1) can not authenticate.
     if ($this->isAdminDisabled($drupal_user)) {
       $this->nullifySessionKeys();
-      $this->messenger->addError('Authentication for Admin (user 1) is disabled.');
+      $this->messenger->addError($this->t('Authentication for Admin (user 1) is disabled.'));
 
       $this->response = $this->getLoginFormRedirection();
 
@@ -268,7 +268,7 @@ class UserAuthenticator extends SocialApiUserAuthenticator {
     // If user can not login because of their role.
     $disabled_role = $this->isUserRoleDisabled($drupal_user);
     if ($disabled_role) {
-      $this->messenger->addError('Authentication for \'@role\' role is disabled.', ['@role' => $disabled_role]);
+      $this->messenger->addError($this->t('Authentication for \'@role\' role is disabled.', ['@role' => $disabled_role]));
 
       $this->response = $this->getLoginFormRedirection();
 
@@ -281,7 +281,7 @@ class UserAuthenticator extends SocialApiUserAuthenticator {
     }
     else {
       $this->nullifySessionKeys();
-      $this->messenger->addError('Your account has not been approved yet or might have been canceled, please contact the administrator.');
+      $this->messenger->addError($this->t('Your account has not been approved yet or might have been canceled, please contact the administrator.'));
 
       $this->response = $this->getLoginFormRedirection();
     }
@@ -300,7 +300,7 @@ class UserAuthenticator extends SocialApiUserAuthenticator {
 
       // If the account needs admin approval.
       if ($this->isApprovalRequired()) {
-        $this->messenger->addWarning('Your account was created, but it needs administrator\'s approval.');
+        $this->messenger->addWarning($this->t('Your account was created, but it needs administrator\'s approval.'));
         $this->nullifySessionKeys();
 
         $this->response = $this->getLoginFormRedirection();
@@ -323,7 +323,7 @@ class UserAuthenticator extends SocialApiUserAuthenticator {
       }
     }
 
-    $this->messenger->addError('You could not be authenticated. Contact site administrator.');
+    $this->messenger->addError($this->t('You could not be authenticated. Contact site administrator.'));
     $this->nullifySessionKeys();
 
     $this->response = $this->getLoginFormRedirection();
