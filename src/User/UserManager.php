@@ -9,6 +9,7 @@ use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\Core\Language\LanguageManagerInterface;
 use Drupal\Core\Logger\LoggerChannelFactoryInterface;
 use Drupal\Core\Messenger\MessengerInterface;
+use Drupal\Core\StringTranslation\StringTranslationTrait;
 use Drupal\Core\Transliteration\PhpTransliteration;
 use Drupal\Core\Utility\Token;
 use Drupal\social_api\User\UserManager as SocialApiUserManager;
@@ -24,6 +25,7 @@ use Symfony\Component\EventDispatcher\EventDispatcherInterface;
  */
 class UserManager extends SocialApiUserManager {
 
+  use StringTranslationTrait;
   use SettingsTrait;
 
   /**

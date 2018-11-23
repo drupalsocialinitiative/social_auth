@@ -7,6 +7,7 @@ use Drupal\Core\Logger\LoggerChannelFactoryInterface;
 use Drupal\Core\Messenger\MessengerInterface;
 use Drupal\Core\Routing\RouteProviderInterface;
 use Drupal\Core\Session\AccountProxyInterface;
+use Drupal\Core\StringTranslation\StringTranslationTrait;
 use Drupal\Core\Url;
 use Drupal\social_api\User\UserAuthenticator as SocialApiUserAuthenticator;
 use Drupal\social_auth\Event\SocialAuthEvents;
@@ -23,6 +24,7 @@ use Symfony\Component\HttpFoundation\RedirectResponse;
 class UserAuthenticator extends SocialApiUserAuthenticator {
 
   use SettingsTrait;
+  use StringTranslationTrait;
 
   /**
    * Event dispatcher.
@@ -268,7 +270,7 @@ class UserAuthenticator extends SocialApiUserAuthenticator {
     // If user can not login because of their role.
     $disabled_role = $this->isUserRoleDisabled($drupal_user);
     if ($disabled_role) {
-      $this->messenger->addError($this->t('Authentication for \'@role\' role is disabled.', ['@role' => $disabled_role]));
+      $this->messenger->addError($this->t("Authentication for '@role' role is disabled.", ['@role' => $disabled_role]));
 
       $this->response = $this->getLoginFormRedirection();
 
@@ -300,7 +302,7 @@ class UserAuthenticator extends SocialApiUserAuthenticator {
 
       // If the account needs admin approval.
       if ($this->isApprovalRequired()) {
-        $this->messenger->addWarning($this->t('Your account was created, but it needs administrator\'s approval.'));
+        $this->messenger->addWarning($this->t("Your account was created, but it needs administrator's approval."));
         $this->nullifySessionKeys();
 
         $this->response = $this->getLoginFormRedirection();
