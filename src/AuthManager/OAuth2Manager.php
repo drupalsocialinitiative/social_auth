@@ -3,6 +3,7 @@
 namespace Drupal\social_auth\AuthManager;
 
 use Drupal\Core\Config\Config;
+use Drupal\Core\Logger\LoggerChannelFactoryInterface;
 use Drupal\social_api\AuthManager\OAuth2Manager as BaseOAuth2Manager;
 
 /**
@@ -34,20 +35,30 @@ abstract class OAuth2Manager extends BaseOAuth2Manager implements OAuth2ManagerI
   protected $endPoints;
 
   /**
+   * The logger factory.
+   *
+   * @var \Drupal\Core\Logger\LoggerChannelFactory
+   */
+  protected $loggerFactory;
+
+  /**
    * Constructor.
    *
    * @param \Drupal\Core\Config\Config $settings
    *   The implementer settings.
+   * @param \Drupal\Core\Logger\LoggerChannelFactoryInterface $logger_factory
+   *   The logger factory.
    */
-  public function __construct(Config $settings) {
+  public function __construct(Config $settings, LoggerChannelFactoryInterface $logger_factory) {
     $this->settings = $settings;
+    $this->loggerFactory = $logger_factory;
     $this->endPoints = $this->scopes = FALSE;
   }
 
   /**
    * {@inheritdoc}
    */
-  public function getExtraDetails() {
+  public function getExtraDetails($method = 'GET', $domain = NULL) {
     $endpoints = $this->getEndPoints();
 
     // Stores the data mapped with endpoints define in settings.
@@ -59,7 +70,7 @@ abstract class OAuth2Manager extends BaseOAuth2Manager implements OAuth2ManagerI
         // Endpoint is set as path/to/endpoint|name.
         $parts = explode('|', $endpoint);
 
-        $data[$parts[1]] = $this->requestEndPoint($parts[0]);
+        $data[$parts[1]] = $this->requestEndPoint($method, $parts[0], $domain);
       }
 
       return json_encode($data);
