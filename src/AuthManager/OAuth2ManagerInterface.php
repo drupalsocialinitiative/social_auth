@@ -33,11 +33,13 @@ interface OAuth2ManagerInterface extends BaseOAuth2ManagerInterface {
    *   The path to request.
    * @param string|null $domain
    *   The domain to request.
+   * @param array $options
+   *   Request options.
    *
    * @return array|mixed
    *   Data returned by provider.
    */
-  public function requestEndPoint($method, $path, $domain = NULL);
+  public function requestEndPoint($method, $path, $domain = NULL, array $options = []);
 
   /**
    * Gets the scopes defined in the settings form.
