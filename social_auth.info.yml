@@ -1,9 +1,8 @@
 name: Social Auth
 type: module
-description: Allows login using different social networking services
+description: Allows user authentication with different services.
 core: 8.x
 package: Social
-version: 8.x-2.x
 configure: social_auth.integrations
 dependencies:
   - social_api:social_api (>= 8.x-2.x)
