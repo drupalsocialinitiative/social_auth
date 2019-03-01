@@ -80,7 +80,7 @@ class UserTest extends BrowserTestBase {
       ]);
 
       // Expects that the user has two associated providers.
-      $this->assertEqual(count($social_auth_users), 2, 'Number of associated providers should be 2');
+      $this->assertEquals(2, count($social_auth_users), 'Number of associated providers should be 2');
 
       // Deletes the Drupal user.
       $this->entityTypeManager->getStorage('user')->delete([$this->user]);
@@ -90,7 +90,7 @@ class UserTest extends BrowserTestBase {
       ]);
 
       // Expects that the user has no associated providers now.
-      $this->assertEqual(count($social_auth_users), 0, 'Number of associated providers should be 0');
+      $this->assertEquals(0, count($social_auth_users), 'Number of associated providers should be 0');
     }
     catch (\Exception $e) {
       $this->fail($e->getMessage());
