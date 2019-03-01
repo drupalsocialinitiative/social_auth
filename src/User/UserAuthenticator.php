@@ -295,7 +295,7 @@ class UserAuthenticator extends SocialApiUserAuthenticator {
    * @param \Drupal\user\UserInterface|null $drupal_user
    *   User object to login.
    */
-  public function authenticateNewUser(UserInterface $drupal_user) {
+  public function authenticateNewUser(UserInterface $drupal_user = NULL) {
 
     // If it's a valid Drupal user.
     if ($drupal_user) {
@@ -325,7 +325,10 @@ class UserAuthenticator extends SocialApiUserAuthenticator {
       }
     }
 
-    $this->messenger->addError($this->t('You could not be authenticated. Contact site administrator.'));
+    if (!$this->isRegistrationDisabled()) {
+      $this->messenger->addError($this->t('You could not be authenticated. Contact site administrator.'));
+    }
+
     $this->nullifySessionKeys();
 
     $this->response = $this->getLoginFormRedirection();
