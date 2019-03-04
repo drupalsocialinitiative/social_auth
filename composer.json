@@ -3,12 +3,15 @@
     "type": "drupal-module",
     "description": "Social Auth ",
     "keywords": ["Drupal"],
-    "license": "GPL-2.0+",
+    "license": "GPL-2.0-or-later",
     "homepage": "https://www.drupal.org/project/social_auth",
     "minimum-stability": "dev",
     "support": {
         "issues": "https://www.drupal.org/project/issues/social_auth",
         "source": "http://cgit.drupalcode.org/social_auth"
+    },
+    "require": {
+        "drupal/social_api": "^2.0"
     },
     "authors": [
         {

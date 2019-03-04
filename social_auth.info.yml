@@ -5,4 +5,4 @@ core: 8.x
 package: Social
 configure: social_auth.integrations
 dependencies:
-  - social_api:social_api (>= 8.x-2.x)
+  - social_api:social_api
