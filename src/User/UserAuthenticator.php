@@ -317,6 +317,8 @@ class UserAuthenticator extends SocialApiUserAuthenticator {
 
         if ($redirect) {
           $this->response = $redirect;
+
+          return;
         }
 
         $this->response = $this->getPostLoginRedirection();

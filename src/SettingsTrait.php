@@ -109,7 +109,7 @@ trait SettingsTrait {
         'user' => $drupal_user->id(),
       ]);
 
-      return new RedirectResponse($redirection);
+      return new RedirectResponse($redirection->toString());
     }
 
     return FALSE;
