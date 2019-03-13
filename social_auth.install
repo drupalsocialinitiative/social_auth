@@ -5,24 +5,7 @@
  * Install, update and uninstall functions for Social Auth.
  */
 
-use Drupal\social_api\Utility\SocialApiImplementerInstaller;
 use Drupal\Core\Database\Database;
-
-/**
- * Implements hook_requirements().
- */
-function social_auth_requirements($phase) {
-  $requirements = [];
-
-  // Social API should be installed at this point in order to check library.
-  \Drupal::service('module_installer')->install(['social_api']);
-
-  if ($phase == 'install') {
-    $requirements = SocialApiImplementerInstaller::checkLibrary('social_auth', 'Social Auth', 'league/oauth2-client', '2.0', '3.0');
-  }
-
-  return $requirements;
-}
 
 /**
  * Add 'social_auth' table when the module is updated from 1.x to 2.x.
