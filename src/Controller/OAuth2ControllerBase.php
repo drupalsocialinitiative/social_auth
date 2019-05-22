@@ -194,6 +194,7 @@ class OAuth2ControllerBase extends ControllerBase {
         $state = $this->providerManager->getState();
         $this->dataHandler->set('oauth2state', $state);
 
+        $this->userAuthenticator->dispatchBeforeRedirect($destination);
         return new TrustedRedirectResponse($auth_url);
       }
       catch (PluginException $exception) {
@@ -251,7 +252,6 @@ class OAuth2ControllerBase extends ControllerBase {
       // Gets user's info from provider.
       if (!$profile = $this->providerManager->getUserInfo()) {
         $this->messenger->addError($this->t('Login failed, could not load user profile. Contact site administrator.'));
-
         return NULL;
       }
 

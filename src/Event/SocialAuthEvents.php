@@ -6,10 +6,9 @@ namespace Drupal\social_auth\Event;
  * Defines Social Auth Events constants.
  */
 final class SocialAuthEvents {
+
   /**
-   * Name of the event fired when social auth is gathering user fields.
-   *
-   * Fired before a new user is created when gathering fields.
+   * Dispatched event when social auth is gathering user fields.
    *
    * @Event
    *
@@ -20,9 +19,7 @@ final class SocialAuthEvents {
   const USER_FIELDS = 'social_auth.user.fields';
 
   /**
-   * Name of the event fired when a new user is created via social auth.
-   *
-   * Fired after a new user account has been created.
+   * Dispatched event when a new user is created via social auth.
    *
    * @Event
    *
@@ -33,9 +30,7 @@ final class SocialAuthEvents {
   const USER_CREATED = 'social_auth.user.created';
 
   /**
-   * Name of the event fired when a new user login using social auth.
-   *
-   * Fired after a user has logged in.
+   * Dispatched event when a new user login using social auth.
    *
    * @Event
    *
@@ -44,5 +39,27 @@ final class SocialAuthEvents {
    * @var string
    */
   const USER_LOGIN = 'social_auth.user.login';
+
+  /**
+   * Dispatched event before redirecting to provider.
+   *
+   * @Event
+   *
+   * @see \Drupal\social_auth\Event\ProviderRedirectEvent
+   *
+   * @var string
+   */
+  const BEFORE_REDIRECT = 'social_auth.before_redirect';
+
+  /**
+   * Dispatched event after authentication fails in provider.
+   *
+   * @Event
+   *
+   * @see \Drupal\social_auth\Event\ProviderRedirectEvent
+   *
+   * @var string
+   */
+  const FAILED_AUTH = 'social_auth.failed_authentication';
 
 }
