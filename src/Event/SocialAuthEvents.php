@@ -12,7 +12,7 @@ final class SocialAuthEvents {
    *
    * @Event
    *
-   * @see \Drupal\social_auth\Event\SocialAuthUserFieldsEvent
+   * @see \Drupal\social_auth\Event\UserFieldsEvent
    *
    * @var string
    */
@@ -23,7 +23,7 @@ final class SocialAuthEvents {
    *
    * @Event
    *
-   * @see \Drupal\social_auth\Event\SocialAuthUserEvent
+   * @see \Drupal\social_auth\Event\UserEvent
    *
    * @var string
    */
@@ -34,7 +34,7 @@ final class SocialAuthEvents {
    *
    * @Event
    *
-   * @see \Drupal\social_auth\Event\SocialAuthUserEvent
+   * @see \Drupal\social_auth\Event\UserEvent
    *
    * @var string
    */
@@ -45,7 +45,7 @@ final class SocialAuthEvents {
    *
    * @Event
    *
-   * @see \Drupal\social_auth\Event\ProviderRedirectEvent
+   * @see \Drupal\social_auth\Event\BeforeRedirectEvent
    *
    * @var string
    */
@@ -56,7 +56,7 @@ final class SocialAuthEvents {
    *
    * @Event
    *
-   * @see \Drupal\social_auth\Event\ProviderRedirectEvent
+   * @see \Drupal\social_auth\Event\FailedAuthenticationEvent
    *
    * @var string
    */

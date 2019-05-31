@@ -13,7 +13,7 @@ use Drupal\social_api\User\UserAuthenticator as SocialApiUserAuthenticator;
 use Drupal\social_auth\Event\BeforeRedirectEvent;
 use Drupal\social_auth\Event\FailedAuthenticationEvent;
 use Drupal\social_auth\Event\SocialAuthEvents;
-use Drupal\social_auth\Event\SocialAuthUserEvent;
+use Drupal\social_auth\Event\UserEvent;
 use Drupal\social_auth\SettingsTrait;
 use Drupal\social_auth\SocialAuthDataHandler;
 use Drupal\user\UserInterface;
@@ -354,7 +354,7 @@ class UserAuthenticator extends SocialApiUserAuthenticator {
       $this->userLoginFinalize($drupal_user);
 
       // Dispatches SocialAuthEvents::USER_LOGIN event.
-      $event = new SocialAuthUserEvent($drupal_user, $this->getPluginId());
+      $event = new UserEvent($drupal_user, $this->getPluginId());
       $this->eventDispatcher->dispatch(SocialAuthEvents::USER_LOGIN, $event);
 
       return TRUE;

@@ -13,9 +13,9 @@ use Drupal\Core\StringTranslation\StringTranslationTrait;
 use Drupal\Core\Transliteration\PhpTransliteration;
 use Drupal\Core\Utility\Token;
 use Drupal\social_api\User\UserManager as SocialApiUserManager;
+use Drupal\social_auth\Event\UserFieldsEvent;
 use Drupal\social_auth\Event\SocialAuthEvents;
-use Drupal\social_auth\Event\SocialAuthUserEvent;
-use Drupal\social_auth\Event\SocialAuthUserFieldsEvent;
+use Drupal\social_auth\Event\UserEvent;
 use Drupal\social_auth\SettingsTrait;
 use Drupal\user\UserInterface;
 use Symfony\Component\EventDispatcher\EventDispatcherInterface;
@@ -198,7 +198,7 @@ class UserManager extends SocialApiUserManager {
         ]);
 
       // Dispatches SocialAuthEvents::USER_CREATED event.
-      $event = new SocialAuthUserEvent($new_user, $this->getPluginId());
+      $event = new UserEvent($new_user, $this->getPluginId());
       $this->eventDispatcher->dispatch(SocialAuthEvents::USER_CREATED, $event);
 
       return $new_user;
@@ -482,7 +482,7 @@ class UserManager extends SocialApiUserManager {
 
     // Dispatches SocialAuthEvents::USER_FIELDS, so that other modules can
     // update this array before an user is saved.
-    $event = new SocialAuthUserFieldsEvent($fields, $this->getPluginId());
+    $event = new UserFieldsEvent($fields, $this->getPluginId());
     $this->eventDispatcher->dispatch(SocialAuthEvents::USER_FIELDS, $event);
     $fields = $event->getUserFields();
 

@@ -5,13 +5,13 @@ namespace Drupal\social_auth\Event;
 use Symfony\Component\EventDispatcher\Event;
 
 /**
- * Defines the user fields event.
+ * Defines the user fields to be set in user creation.
  *
  * @todo validate user_fields to be set
  *
  * @see \Drupal\social_auth\Event\SocialAuthEvents
  */
-class SocialAuthUserFieldsEvent extends Event {
+class UserFieldsEvent extends Event {
 
   /**
    * The user fields.
@@ -28,7 +28,7 @@ class SocialAuthUserFieldsEvent extends Event {
   protected $pluginId;
 
   /**
-   * Constructs a new SocialAuthUserFieldsEvent.
+   * UserFieldsEvent constructor.
    *
    * @param array $user_fields
    *   Initial user fields to populate the newly created user.

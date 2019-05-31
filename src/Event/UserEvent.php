@@ -6,11 +6,11 @@ use Drupal\user\UserInterface;
 use Symfony\Component\EventDispatcher\Event;
 
 /**
- * Class SocialAuthEvent.
+ * Dispatched when user is created or logged in through Social Auth.
  *
  * @see \Drupal\social_auth\Event\SocialAuthEvents
  */
-class SocialAuthUserEvent extends Event {
+class UserEvent extends Event {
 
   /**
    * The user.
@@ -27,7 +27,7 @@ class SocialAuthUserEvent extends Event {
   protected $pluginId;
 
   /**
-   * Constructs a new SocialAuthEvent.
+   * UserEvent constructor.
    *
    * @param \Drupal\user\UserInterface $user
    *   The user.

@@ -7,7 +7,7 @@ use Symfony\Component\EventDispatcher\Event;
 use Symfony\Component\HttpFoundation\RedirectResponse;
 
 /**
- * Class FailedAuthenticationEvent.
+ * Dispatched when user authentication fails in provider.
  *
  * @see \Drupal\social_auth\Event\SocialAuthEvents
  */

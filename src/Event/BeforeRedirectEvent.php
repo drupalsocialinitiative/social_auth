@@ -6,7 +6,7 @@ use Drupal\social_auth\SocialAuthDataHandler;
 use Symfony\Component\EventDispatcher\Event;
 
 /**
- * Class BeforeRedirectEvent.
+ * Dispatched before user is redirected to provider for authentication.
  *
  * @see \Drupal\social_auth\Event\SocialAuthEvents
  */
