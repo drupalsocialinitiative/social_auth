@@ -108,34 +108,29 @@ class UserManager extends SocialApiUserManager {
   /**
    * Creates a new user.
    *
-   * @param string $name
-   *   The user's name.
-   * @param string $email
-   *   The user's email address.
-   * @param string $provider_user_id
-   *   The unique id returned by the user.
-   * @param string $token
-   *   The access token for making additional API calls.
-   * @param string|bool $picture_url
-   *   The user's picture.
-   * @param string $data
-   *   The additional user_data to be stored in database.
+   * @param \Drupal\social_auth\User\SocialAuthUserInterface $user
+   *   The data of the user to be created.
    *
    * @return \Drupal\user\UserInterface|null
    *   The Drupal user if successful
    *   Null otherwise.
    */
-  public function createNewUser($name, $email, $provider_user_id, $token, $picture_url, $data) {
-    $drupal_user = $this->createUser($name, $email);
+  public function createNewUser(SocialAuthUserInterface $user) {
+    $drupal_user = $this->createUser($user);
 
     if ($drupal_user) {
       // Download profile picture for the newly created user.
-      if ($picture_url) {
-        $this->setProfilePic($drupal_user, $picture_url, $provider_user_id);
+      if ($user->pictureUrl) {
+        $this->setProfilePic($drupal_user,
+                             $user->pictureUrl,
+                             $user->providerUserID);
       }
 
       // If the new user could be registered.
-      $this->addUserRecord($drupal_user->id(), $provider_user_id, $token, $data);
+      $this->addUserRecord($drupal_user->id(),
+                           $user->providerUserID,
+                           $user->token,
+                           $user->additionalData);
 
       return $drupal_user;
     }
@@ -146,16 +141,18 @@ class UserManager extends SocialApiUserManager {
   /**
    * Create a new user account.
    *
-   * @param string $name
-   *   User's name on Provider.
-   * @param string $email
-   *   User's email address.
+   * @param \Drupal\social_auth\User\SocialAuthUserInterface $user
+   *   The data of the user to be created.
    *
    * @return \Drupal\user\Entity\User|false
    *   Drupal user account if user was created
    *   False otherwise
    */
-  public function createUser($name, $email) {
+  public function createUser(SocialAuthUserInterface $user) {
+
+    $name = $user->name;
+    $email = $user->email;
+
     // Make sure we have everything we need.
     if (!$name) {
       $this->loggerFactory
@@ -168,7 +165,8 @@ class UserManager extends SocialApiUserManager {
     if ($this->isRegistrationDisabled()) {
       $this->loggerFactory
         ->get($this->getPluginId())
-        ->warning('Failed to create user. User registration is disabled. Name: @name, email: @email.', ['@name' => $name, '@email' => $email]);
+        ->warning('Failed to create user. User registration is disabled. Name: @name, email: @email.',
+          ['@name' => $name, '@email' => $email]);
 
       $this->messenger->addError($this->t('User registration is disabled, please contact the administrator.'));
 
