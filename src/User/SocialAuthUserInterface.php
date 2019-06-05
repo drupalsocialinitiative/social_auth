@@ -8,6 +8,134 @@ namespace Drupal\social_auth\User;
 interface SocialAuthUserInterface {
 
   /**
+   * Gets the user's first name.
+   *
+   * @return string
+   *   The user's first name.
+   */
+  public function getFistName();
+
+  /**
+   * Sets the user's first name.
+   *
+   * @param string $first_name
+   *   The user's first name.
+   */
+  public function setFistName($first_name);
+
+  /**
+   * Gets the user's last name.
+   *
+   * @return string
+   *   The user's last name.
+   */
+  public function getLastName();
+
+  /**
+   * Sets the user's last name.
+   *
+   * @param string $last_name
+   *   The user's last name.
+   */
+  public function setLastName($last_name);
+
+  /**
+   * Gets the user's name.
+   *
+   * @return string
+   *   The user's name.
+   */
+  public function getName();
+
+  /**
+   * Sets the user's name.
+   *
+   * @param string $name
+   *   The user's name.
+   */
+  public function setName($name);
+
+  /**
+   * Gets the user's email.
+   *
+   * @return string
+   *   The user's email.
+   */
+  public function getEmail();
+
+  /**
+   * Sets the user's email.
+   *
+   * @param string $email
+   *   The user's email.
+   */
+  public function setEmail($email);
+
+  /**
+   * Gets the user's id in provider.
+   *
+   * @return string
+   *   The user's id in provider.
+   */
+  public function getProviderId();
+
+  /**
+   * Sets the user's id in provider.
+   *
+   * @param string $provider_id
+   *   The user's id in provider.
+   */
+  public function setProviderId($provider_id);
+
+  /**
+   * Gets the user's token.
+   *
+   * @return string
+   *   The user's token.
+   */
+  public function getToken();
+
+  /**
+   * Sets the user's token.
+   *
+   * @param string $token
+   *   The user's token.
+   */
+  public function setToken($token);
+
+  /**
+   * Gets the user's picture URL.
+   *
+   * @return string
+   *   The user's picture URL.
+   */
+  public function getPictureUrl();
+
+  /**
+   * Sets the user's picture URL.
+   *
+   * @param string $picture_url
+   *   The user's picture URL.
+   */
+  public function setPictureUrl($picture_url);
+
+  /**
+   * Set the user's additional data.
+   *
+   * @return string
+   *   The user's additional data.
+   */
+  public function getAdditionalData();
+
+  /**
+   * Sets the user's additional data.
+   *
+   * @param string $additional_data
+   *   The user's additional data.
+   */
+  public function setAdditionalData($additional_data);
+
+  /**
    * Adds a new key-value pair in customData.
    *
    * @param string $key

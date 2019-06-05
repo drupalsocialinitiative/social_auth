@@ -120,17 +120,17 @@ class UserManager extends SocialApiUserManager {
 
     if ($drupal_user) {
       // Download profile picture for the newly created user.
-      if ($user->pictureUrl) {
+      if ($user->getPictureUrl()) {
         $this->setProfilePic($drupal_user,
-                             $user->pictureUrl,
-                             $user->providerUserID);
+                             $user->getPictureUrl(),
+                             $user->getProviderId());
       }
 
       // If the new user could be registered.
       $this->addUserRecord($drupal_user->id(),
-                           $user->providerUserID,
-                           $user->token,
-                           $user->additionalData);
+                           $user->getProviderId(),
+                           $user->getToken(),
+                           $user->getAdditionalData());
 
       return $drupal_user;
     }
@@ -150,14 +150,15 @@ class UserManager extends SocialApiUserManager {
    */
   public function createUser(SocialAuthUserInterface $user) {
 
-    $name = $user->name;
-    $email = $user->email;
+    $name = $user->getName();
+    $email = $user->getEmail();
 
     // Make sure we have everything we need.
     if (!$name) {
       $this->loggerFactory
         ->get($this->getPluginId())
         ->error('Failed to create user. Name: @name', ['@name' => $name]);
+
       return FALSE;
     }
 
@@ -179,7 +180,7 @@ class UserManager extends SocialApiUserManager {
     // Try to save the new user account.
     try {
       // Initializes the user fields.
-      $fields = $this->getUserFields($name, $email, $langcode);
+      $fields = $this->getUserFields($user, $langcode);
 
       /** @var \Drupal\user\Entity\User $new_user */
       $new_user = $this->entityTypeManager
@@ -196,7 +197,7 @@ class UserManager extends SocialApiUserManager {
         ]);
 
       // Dispatches SocialAuthEvents::USER_CREATED event.
-      $event = new UserEvent($new_user, $this->getPluginId());
+      $event = new UserEvent($new_user, $this->getPluginId(), $user);
       $this->eventDispatcher->dispatch(SocialAuthEvents::USER_CREATED, $event);
 
       return $new_user;
@@ -456,21 +457,19 @@ class UserManager extends SocialApiUserManager {
   /**
    * Returns an array of fields to initialize the creation of the user.
    *
-   * @param string $name
-   *   User's name on Provider.
-   * @param string $email
-   *   User's email address.
+   * @param \Drupal\social_auth\User\SocialAuthUserInterface $user
+   *   The data of the user to be created.
    * @param string $langcode
    *   The current UI language.
    *
    * @return array
    *   Fields to initialize for the user creation.
    */
-  protected function getUserFields($name, $email, $langcode) {
+  protected function getUserFields(SocialAuthUserInterface $user, $langcode) {
     $fields = [
-      'name' => $this->generateUniqueUsername($name),
-      'mail' => $email,
-      'init' => $email,
+      'name' => $this->generateUniqueUsername($user->getName()),
+      'mail' => $user->getEmail(),
+      'init' => $user->getEmail(),
       'pass' => $this->userPassword(32),
       'status' => $this->getNewUserStatus(),
       'langcode' => $langcode,
@@ -480,7 +479,7 @@ class UserManager extends SocialApiUserManager {
 
     // Dispatches SocialAuthEvents::USER_FIELDS, so that other modules can
     // update this array before an user is saved.
-    $event = new UserFieldsEvent($fields, $this->getPluginId());
+    $event = new UserFieldsEvent($fields, $this->getPluginId(), $user);
     $this->eventDispatcher->dispatch(SocialAuthEvents::USER_FIELDS, $event);
     $fields = $event->getUserFields();
 

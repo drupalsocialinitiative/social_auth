@@ -12,56 +12,56 @@ class SocialAuthUser implements SocialAuthUserInterface {
    *
    * @var string|null
    */
-  public $firstName;
+  protected $firstName;
 
   /**
    * Last name.
    *
    * @var string|null
    */
-  public $lastName;
+  protected $lastName;
 
   /**
    * Used to create the username in Drupal: first + last most of the time.
    *
    * @var string
    */
-  public $name;
+  protected $name;
 
   /**
    * Email address.
    *
    * @var string|null
    */
-  public $email;
+  protected $email;
 
   /**
    * ID in provider.
    *
    * @var string
    */
-  public $providerUserID;
+  protected $providerUserID;
 
   /**
    * Token used for authentication in provider.
    *
    * @var string|mixed
    */
-  public $token;
+  protected $token;
 
   /**
    * URL to get profile picture.
    *
    * @var string
    */
-  public $pictureUrl = NULL;
+  protected $pictureUrl = NULL;
 
   /**
    * User's extra data. Store in additional_data field in social_auth entity.
    *
    * @var string|null
    */
-  public $additionalData;
+  protected $additionalData;
 
   /**
    * Other data added through external modules (e.g. event subscribers)
@@ -98,6 +98,118 @@ class SocialAuthUser implements SocialAuthUserInterface {
     $this->providerUserID = $provider_user_id;
     $this->token = $token;
     $this->pictureUrl = $picture_url;
+    $this->additionalData = $additional_data;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function getFistName() {
+    return $this->firstName;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function setFistName($first_name) {
+    $this->firstName = $first_name;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function getLastName() {
+    return $this->lastName;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function setLastName($last_name) {
+    $this->lastName = $last_name;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function getName() {
+    return $this->name;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function setName($name) {
+    $this->name = $name;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function getEmail() {
+    return $this->email;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function setEmail($email) {
+    $this->email = $email;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function getProviderId() {
+    return $this->providerUserID;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function setProviderId($provider_id) {
+    $this->providerUserID = $provider_id;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function getToken() {
+    return $this->token;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function setToken($token) {
+    $this->token = $token;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function getPictureUrl() {
+    return $this->pictureUrl;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function setPictureUrl($picture_url) {
+    $this->pictureUrl = $picture_url;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function getAdditionalData() {
+    return $this->additionalData;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function setAdditionalData($additional_data) {
     $this->additionalData = $additional_data;
   }
 
