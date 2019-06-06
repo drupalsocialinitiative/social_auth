@@ -7,6 +7,7 @@ use Drupal\social_auth\SocialAuthDataHandler;
 use Symfony\Component\EventDispatcher\Event;
 use Symfony\Component\HttpFoundation\RedirectResponse;
 use Drupal\social_auth\Event\FailedAuthenticationEvent;
+use Drupal\social_auth\Event\SocialAuthEvents;
 
 
 
@@ -93,6 +94,38 @@ class EventTest extends UnitTestCase {
                 ->willReturn($this->data_handler);
      $this->assertEquals('error404', $collection->getError());
      $this->assertEquals('drupal123', $collection->getPluginId());
+   }
+
+   /**
+    * tests for class SocialAuthEvents
+    */
+
+   public function testSocialAuthEvents () {
+     $reflection = new ReflectionClass('Drupal\social_auth\Event\SocialAuthEvents');
+     $user_fields = $reflection->getConstant('USER_FIELDS');
+     $user_created = $reflection->getConstant('USER_CREATED');
+     $user_login = $reflection->getConstant('USER_LOGIN');
+     $user_redirect = $reflection->getConstant('BEFORE_REDIRECT');
+     $faield_auth = $reflection->getConstant('FAILED_AUTH');
+     $this->assertEquals('social_auth.user.fields',
+            $reflection->getConstant('USER_FIELDS'),
+            'The constant values is not matched');
+
+     $this->assertEquals('social_auth.user.created',
+            $reflection->getConstant('USER_CREATED'),
+            'The constant values is not matched');
+
+     $this->assertEquals('social_auth.user.login',
+            $reflection->getConstant('USER_LOGIN'),
+            'The constant values is not matched');
+
+     $this->assertEquals('social_auth.before_redirect',
+            $reflection->getConstant('BEFORE_REDIRECT'),
+            'The constant values is not matched');
+
+     $this->assertEquals('social_auth.failed_authentication',
+            $reflection->getConstant('FAILED_AUTH'),
+            'The constant values is not matched');
    }
 
 }
