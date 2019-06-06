@@ -10,6 +10,7 @@ use Drupal\social_auth\Event\FailedAuthenticationEvent;
 use Drupal\social_auth\Event\SocialAuthEvents;
 use Drupal\user\UserInterface;
 use Drupal\social_auth\Event\UserEvent;
+use Drupal\social_auth\Event\UserFieldsEvent;
 
 
 
@@ -20,6 +21,7 @@ class EventTest extends UnitTestCase {
   protected $error = "error404";
   protected $response = 'drupal';
   protected $user = 'drupaluser';
+  protected $user_fields;
 
 
   /**
@@ -144,6 +146,24 @@ class EventTest extends UnitTestCase {
           ->willReturn($this->pluginId);
       $collection->method('getUser')
           ->willReturn($this->user);
+      $this->assertSame('drupal123', $collection->getPluginId());
+    }
+
+    /**
+     * tests for class UserFieldsEvent
+     */
+
+    public function testUserFieldsEvent () {
+      // $this->user = $this->createMock(UserInterface::class);
+      $this->user_fields = array(1,2,3);
+      $collection = $this->getMockBuilder('Drupal\social_auth\Event\UserFieldsEvent')
+                         ->setConstructorArgs(array($this->user_fields, $this->pluginId))
+                         ->setMethods(array('getPluginId'))
+                         ->getMock();
+      $collection->method('getPluginId')
+                 ->willReturn($this->pluginId);
+      $collection->setUserFields($this->user_fields);
+      $this->assertEquals($this->user_fields, $collection->getUserFields());
       $this->assertSame('drupal123', $collection->getPluginId());
     }
 }
