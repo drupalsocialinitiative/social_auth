@@ -7,7 +7,11 @@ use Drupal\social_api\SocialApiDataHandler;
 
 class SocialAuthDataHandlerTest extends UnitTestCase {
 
-  public function testSocialAuthHandler () {
+  /**
+   * tests for class SocialAuthDataHandler
+   */
+
+  public function testSocialAuthDataHandler () {
 
     $collection = $this->getMockBuilder('Drupal\social_auth\SocialAuthDataHandler')
                           ->disableOriginalConstructor()
