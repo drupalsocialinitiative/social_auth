@@ -8,6 +8,8 @@ use Symfony\Component\EventDispatcher\Event;
 use Symfony\Component\HttpFoundation\RedirectResponse;
 use Drupal\social_auth\Event\FailedAuthenticationEvent;
 use Drupal\social_auth\Event\SocialAuthEvents;
+use Drupal\user\UserInterface;
+use Drupal\social_auth\Event\UserEvent;
 
 
 
@@ -17,6 +19,7 @@ class EventTest extends UnitTestCase {
   protected $destination = 'drupal123';
   protected $error = "error404";
   protected $response = 'drupal';
+  protected $user = 'drupaluser';
 
 
   /**
@@ -46,8 +49,8 @@ class EventTest extends UnitTestCase {
                        ->getMock();
 
     $this->assertTrue(
-        method_exists($collection, 'getDataHandler'),
-        'BeforeRedirectEvent does not have getDataHandler function/method'
+      method_exists($collection, 'getDataHandler'),
+      'BeforeRedirectEvent does not have getDataHandler function/method'
       );
     $this->assertTrue(
       method_exists($collection, 'getPluginId'),
@@ -128,6 +131,21 @@ class EventTest extends UnitTestCase {
             'The constant values is not matched');
    }
 
+   /**
+    * tests for class UserEvent
+    */
+
+    public function testUserEvent () {
+      $this->user = $this->createMock(UserInterface::class);
+      $collection = $this->getMockBuilder('Drupal\social_auth\Event\UserEvent')
+                         ->setConstructorArgs(array($this->user, $this->pluginId))
+                         ->getMock();
+      $collection->method('getPluginId')
+          ->willReturn($this->pluginId);
+      $collection->method('getUser')
+          ->willReturn($this->user);
+      $this->assertSame('drupal123', $collection->getPluginId());
+    }
 }
 
 
