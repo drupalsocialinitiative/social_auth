@@ -21,6 +21,21 @@ class SettingsTest extends UnitTestCase {
   protected $config;
 
   /**
+   * __construct function
+   */
+  public function __construct() {
+       parent::__construct();
+   }
+
+  /**
+   * {@inheritdoc}
+   */
+
+  public function setUp() {
+    parent::setUp();
+  }
+
+  /**
    * tests for class SettingsBase
    */
 
@@ -28,10 +43,10 @@ class SettingsTest extends UnitTestCase {
     $this->storage = $this->createMock(StorageInterface::class);
     $this->event_dispatcher = $this->createMock(EventDispatcherInterface::class);
     $this->typed_config = $this->createMock(TypedConfigManagerInterface::class);
-    $this->configs = $this->getMockBuilder('Drupal\Core\Config\ImmutableConfig')
+    $this->configs = $this->getMockBuilder(ImmutableConfig::class)
                           ->setConstructorArgs(array($this->config, $this->storage, $this->event_dispatcher, $this->typed_config))
                           ->getMock();
-    $collection = $this->getMockBuilder('Drupal\social_auth\Settings\SettingsBase')
+    $collection = $this->getMockBuilder(SettingsBase::class)
                        ->setConstructorArgs(array($this->configs))
                        ->getMock();
     $this->assertTrue($collection instanceof SettingsBase);
