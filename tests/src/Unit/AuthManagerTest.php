@@ -35,7 +35,7 @@ class AuthManagerTest extends UnitTestcase {
   public function setUp() {
     $this->logger_factory = $this->createMock(LoggerChannelFactoryInterface::class);
     $this->settings = $this->createMock(Config::class);
-    $this->collection = $this->getMockBuilder('Drupal\social_auth\AuthManager\OAuth2Manager')
+    $this->collection = $this->getMockBuilder(OAuth2Manager::class)
                        ->setConstructorArgs(array($this->settings, $this->logger_factory))
                        ->setMethods(['getScopes', 'getEndPoints'])
                        ->getMockForAbstractClass();
@@ -76,20 +76,22 @@ class AuthManagerTest extends UnitTestcase {
     $this->assertSame('drupal123', $this->collection->getEndPoints());
   }
 
-  public function testGetExtraDetails () {
-    $endpoints = $this->collection->getEndPoints();
-    $data = [];
-    $this->assertEmpty($data);
-    if ($endpoints) {
-      // Iterates through endpoints define in settings and retrieves them.
-      foreach (explode(PHP_EOL, $endpoints) as $endpoint) {
-        // Endpoint is set as path/to/endpoint|name.
-        $parts = explode('|', $endpoint);
-        $data[$parts[1]] = $this->collection->requestEndPoint($method, $parts[0], $domain);
-      }
-      return json_encode($data);
-    }
-  }
+  // public function testGetExtraDetails ($method = 'GET', $domain = NULL) {
+  //   $this->collection->method('getEndPoints')
+  //                    ->willReturn($this->endPoints);
+  //   $endpoints = $this->collection->getEndPoints();
+  //   $data = [];
+  //   if ($endpoints) {
+  //     // Iterates through endpoints define in settings and retrieves them.
+  //     foreach (explode(PHP_EOL, $endpoints) as $endpoint) {
+  //       // Endpoint is set as path/to/endpoint|name.
+  //       $parts = explode('|', $endpoint);
+  //
+  //       $data[$parts[0]] = $this->collection->requestEndPoint($method, $parts[0], $domain);
+  //     }
+  //     return json_encode($data);
+  //   }
+  // }
 
   public function testOAuth2ManagerInterface () {
     $this->assertTrue(
