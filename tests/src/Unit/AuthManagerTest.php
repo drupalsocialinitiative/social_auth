@@ -12,15 +12,6 @@ use Drupal\social_auth\AuthManager\OAuth2ManagerInterface;
 
 class AuthManagerTest extends UnitTestcase {
 
-  protected $settings;
-  protected $loggerFactory;
-  protected $scopes;
-  public $collection;
-  protected $endPoints;
-  public $collections;
-  protected $method;
-  protected $path;
-
   /**
    * __construct function
    */
@@ -33,51 +24,55 @@ class AuthManagerTest extends UnitTestcase {
    */
 
   public function setUp() {
-    $this->logger_factory = $this->createMock(LoggerChannelFactoryInterface::class);
-    $this->settings = $this->createMock(Config::class);
-    $this->collection = $this->getMockBuilder(OAuth2Manager::class)
-                       ->setConstructorArgs(array($this->settings, $this->logger_factory))
-                       ->setMethods(['getScopes', 'getEndPoints'])
-                       ->getMockForAbstractClass();
-    $this->collections = $this->getMock(OAuth2ManagerInterface::class);
-    // enable any other required module
-    $this->scopes = "drupal123";
-    $this->endPoints = "drupal123";
     parent::setUp();
   }
 
 
   public function testOAuth2Manager () {
+    $logger_factory = $this->createMock(LoggerChannelFactoryInterface::class);
+    $settings = $this->createMock(Config::class);
+    $collection = $this->getMockBuilder(OAuth2Manager::class)
+                       ->setConstructorArgs(array($settings, $logger_factory))
+                       ->setMethods(['getScopes', 'getEndPoints', 'settings', 'get'])
+                       ->getMockForAbstractClass();
+
+    $scopes = FALSE;
+    $endPoints = "drupal123";
     $this->assertTrue(
-          method_exists($this->collection, 'getExtraDetails'),
+          method_exists($collection, 'getExtraDetails'),
             'OAuth2Manager does not have getExtraDetails function/method'
     );
     $this->assertTrue(
-          method_exists($this->collection, 'getScopes'),
+          method_exists($collection, 'getScopes'),
             'OAuth2Manager does not have getScopes function/method'
     );
     $this->assertTrue(
-          method_exists($this->collection, 'getEndPoints'),
+          method_exists($collection, 'getEndPoints'),
             'OAuth2Manager does not have ggetEndPoints function/method'
     );
 
-    $this->collection->method('getScopes')
-                     ->willReturn($this->scopes);
-    if ($this->scopes === FALSE){
-      $this->scopes = $this->settings->get('scopes');
-    }
-    $this->assertSame('drupal123', $this->collection->getScopes());
+    $settings->method('get')
+             ->willReturn('drupal123');
 
-    $this->collection->method('getEndPoints')
-                     ->willReturn($this->endPoints);
-    if ($this->endPoints === FALSE) {
-      $this->endPoints = $this->settings->get('endpoints');
+    if ($scopes === FALSE){
+      $scopes = $settings->get('scopes');
     }
-    $this->assertSame('drupal123', $this->collection->getEndPoints());
+
+    $collection->method('getScopes')
+                     ->willReturn($scopes);
+
+    if ($endPoints === FALSE) {
+      $endPoints = $settings->get('endpoints');
+    }
+    $collection->method('getEndPoints')
+                     ->willReturn($endPoints);
+
+    $this->assertSame('drupal123', $collection->getScopes());
+    $this->assertSame('drupal123', $collection->getEndPoints());
   }
 
   // public function testGetExtraDetails ($method = 'GET', $domain = NULL) {
-  //   $this->collection->method('getEndPoints')
+  //   $collection->method('getEndPoints')
   //                    ->willReturn($this->endPoints);
   //   $endpoints = $this->collection->getEndPoints();
   //   $data = [];
@@ -94,24 +89,27 @@ class AuthManagerTest extends UnitTestcase {
   // }
 
   public function testOAuth2ManagerInterface () {
+    $method = "drupalmethod";
+    $path = "drupalpath";
+    $collections = $this->getMock(OAuth2ManagerInterface::class);
     $this->assertTrue(
-          method_exists($this->collections, 'getExtraDetails'),
+          method_exists($collections, 'getExtraDetails'),
             'OAuth2ManagerInterface does not have getExtraDetails function/method'
     );
     $this->assertTrue(
-          method_exists($this->collections, 'requestEndPoint'),
+          method_exists($collections, 'requestEndPoint'),
             'OAuth2ManagerInterface does not have requestEndPoint function/method'
     );
     $this->assertTrue(
-          method_exists($this->collections, 'getScopes'),
+          method_exists($collections, 'getScopes'),
             'OAuth2ManagerInterface does not have getScopes function/method'
     );
     $this->assertTrue(
-          method_exists($this->collections, 'getEndPoints'),
+          method_exists($collections, 'getEndPoints'),
             'OAuth2ManagerInterface does not have getEndPoints function/method'
     );
     $options = array();
-    $this->collections->requestEndPoint($this->method, $this->path, $domain = NULL, $options = []);
+    $collections->requestEndPoint($method, $path, $domain = NULL, $options = []);
   }
 }
 
