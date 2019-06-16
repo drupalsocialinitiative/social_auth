@@ -23,32 +23,18 @@ use Symfony\Component\HttpFoundation\RequestStack;
 class ControllerTest extends UnitTestCase {
 
   /**
-   * __construct function
-   */
-  public function __construct() {
-       parent::__construct();
-   }
-
-  /**
-   * {@inheritdoc}
-   */
-
-  public function setUp() {
-    parent::setUp();
-  }
-
-  /**
    * tests for class SocialAuthController
    */
-
   public function testSocialAuthController () {
     $namespaces = $this->createMock(Traversable::class);
     $cache_backend = $this->createMock(CacheBackendInterface::class);
     $module_handler = $this->createMock(ModuleHandlerInterface::class);
     $container = $this->createMock(ContainerInterface::class);
+
     $networkManager = $this->getMockBuilder(NetworkManager::class)
       ->setConstructorArgs(array($namespaces, $cache_backend, $module_handler))
       ->getMock();
+
     $socialAuthController = $this->getMockBuilder(SocialAuthController::class)
       ->setConstructorArgs(array($networkManager))
       ->getMock();
@@ -57,6 +43,7 @@ class ControllerTest extends UnitTestCase {
       method_exists($socialAuthController, 'setLoginButtonSettings'),
       'SocialAuthController does not have setLoginButtonSettings function/method'
       );
+
     $this->assertTrue(
       method_exists($socialAuthController, 'deleteLoginButtonSettings'),
       'SocialAuthController does not have deleteLoginButtonSettings function/method'
@@ -67,7 +54,6 @@ class ControllerTest extends UnitTestCase {
    * tests for class OAuth2ControllerBase
    */
   public function testOAuth2ControllerBase() {
-    $this->assertTrue(true);
     $messenger = $this->createMock(MessengerInterface::class);
     $network_manager = $this->createMock(NetworkManager::class);
     $user_authenticator = $this->createMock(UserAuthenticator::class);
@@ -75,6 +61,7 @@ class ControllerTest extends UnitTestCase {
     $data_handler = $this->createMock(SocialAuthDataHandler::class);
     $renderer = $this->createMock(RendererInterface::class);
     $request = $this->createMock(RequestStack::class);
+
     $oAuth2ControllerBase = $this->getMockBuilder(OAuth2ControllerBase::class)
                                  ->setConstructorArgs(array('moduleName',
                                                       'pluginId',
@@ -92,6 +79,7 @@ class ControllerTest extends UnitTestCase {
        method_exists($oAuth2ControllerBase, 'processCallback'),
          'OAuth2ControllerBase does not implements processCallback function/method'
        );
+
     $this->assertTrue(
        method_exists($oAuth2ControllerBase, 'redirectToProvider'),
          'OAuth2ControllerBase does not implements redirectToProvider function/method'
