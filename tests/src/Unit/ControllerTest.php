@@ -2,41 +2,38 @@
 
 use Drupal\Tests\UnitTestCase;
 use Drupal\social_auth\Controller\SocialAuthController;
-use Drupal\social_api\Controller\SocialApiController;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 use Drupal\social_api\Plugin\NetworkManager;
 use Drupal\Core\Cache\CacheBackendInterface;
 use Drupal\Core\Extension\ModuleHandlerInterface;
 use Drupal\social_auth\Controller\OAuth2ControllerBase;
-use Drupal\Component\Plugin\Exception\PluginException;
-use Drupal\Core\Controller\ControllerBase;
 use Drupal\Core\Messenger\MessengerInterface;
-use Drupal\Core\Render\RenderContext;
 use Drupal\Core\Render\RendererInterface;
-use Drupal\Core\Routing\TrustedRedirectResponse;
 use Drupal\social_auth\AuthManager\OAuth2ManagerInterface;
 use Drupal\social_auth\SocialAuthDataHandler;
 use Drupal\social_auth\User\UserAuthenticator;
 use Symfony\Component\HttpFoundation\RequestStack;
 
-
+/**
+ * Defines Controller Test Class.
+ */
 class ControllerTest extends UnitTestCase {
 
   /**
-   * tests for class SocialAuthController
+   * Tests for class SocialAuthController.
    */
-  public function testSocialAuthController () {
+  public function testSocialAuthController() {
     $namespaces = $this->createMock(Traversable::class);
     $cache_backend = $this->createMock(CacheBackendInterface::class);
     $module_handler = $this->createMock(ModuleHandlerInterface::class);
     $container = $this->createMock(ContainerInterface::class);
 
     $networkManager = $this->getMockBuilder(NetworkManager::class)
-      ->setConstructorArgs(array($namespaces, $cache_backend, $module_handler))
+      ->setConstructorArgs([$namespaces, $cache_backend, $module_handler])
       ->getMock();
 
     $socialAuthController = $this->getMockBuilder(SocialAuthController::class)
-      ->setConstructorArgs(array($networkManager))
+      ->setConstructorArgs([$networkManager])
       ->getMock();
 
     $this->assertTrue(
@@ -51,7 +48,7 @@ class ControllerTest extends UnitTestCase {
   }
 
   /**
-   * tests for class OAuth2ControllerBase
+   * Tests for class OAuth2ControllerBase.
    */
   public function testOAuth2ControllerBase() {
     $messenger = $this->createMock(MessengerInterface::class);
@@ -63,19 +60,19 @@ class ControllerTest extends UnitTestCase {
     $request = $this->createMock(RequestStack::class);
 
     $oAuth2ControllerBase = $this->getMockBuilder(OAuth2ControllerBase::class)
-                                 ->setConstructorArgs(array('moduleName',
-                                                      'pluginId',
-                                                      $messenger,
-                                                      $network_manager,
-                                                      $user_authenticator,
-                                                      $provider_manager,
-                                                      $request,
-                                                      $data_handler,
-                                                      $renderer,
-                                                      ))
-                                 ->getMock();
+      ->setConstructorArgs(['moduleName',
+        'pluginId',
+        $messenger,
+        $network_manager,
+        $user_authenticator,
+        $provider_manager,
+        $request,
+        $data_handler,
+        $renderer,
+      ])
+      ->getMock();
 
-     $this->assertTrue(
+    $this->assertTrue(
        method_exists($oAuth2ControllerBase, 'processCallback'),
          'OAuth2ControllerBase does not implements processCallback function/method'
        );
