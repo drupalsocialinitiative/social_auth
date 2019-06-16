@@ -178,6 +178,7 @@ class EventTest extends UnitTestCase {
 
     $userEvent->method('getPluginId')
       ->willReturn($pluginId);
+
     $userEvent->method('getUser')
       ->willReturn($user);
 
@@ -210,6 +211,7 @@ class EventTest extends UnitTestCase {
 
     $userFieldsEvent->method('getPluginId')
       ->willReturn($pluginId);
+
     $userFieldsEvent->setUserFields($user_fields);
 
     $this->assertTrue(
