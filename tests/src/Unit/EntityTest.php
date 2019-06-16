@@ -9,21 +9,6 @@ use Drupal\Core\Entity\EntityTypeInterface;
 use Drupal\Core\Entity\ContentEntityInterface;
 
 class EntityTest extends UnitTestCase {
-  protected $setting = array();
-  /**
-   * __construct function
-   */
-  public function __construct() {
-       parent::__construct();
-   }
-
-  /**
-   * {@inheritdoc}
-   */
-   public function setUp() {
-     parent::setUp();
-   }
-
    public function testSocialAuth () {
      $socialAuth = $this->createMock(SocialAuth::class);
 
@@ -59,34 +44,42 @@ class EntityTest extends UnitTestCase {
         method_exists($socialAuth, 'getUserId'),
           'SocialAuth does not implements getUserId function/method'
         );
+
      $this->assertTrue(
         method_exists($socialAuth, 'setAdditionalData'),
           'SocialAuth does not implements setAdditionalData function/method'
         );
+
      $this->assertTrue(
         method_exists($socialAuth, 'getAdditionalData'),
           'SocialAuth does not implements getAdditionalData function/method'
         );
+
      $this->assertTrue(
         method_exists($socialAuth, 'setToken'),
           'SocialAuth does not implements setToken function/method'
         );
+
      $this->assertTrue(
         method_exists($socialAuth, 'getToken'),
           'SocialAuth does not implements getToken function/method'
         );
+
      $this->assertTrue(
         method_exists($socialAuth, 'setCreatedTime'),
           'SocialAuth does not implements setCreatedTime function/method'
         );
+
      $this->assertTrue(
         method_exists($socialAuth, 'getCreatedTime'),
           'SocialAuth does not implements getCreatedTime function/method'
         );
+
      $this->assertTrue(
         method_exists($socialAuth, 'setChangedTime'),
           'SocialAuth does not implements setChangedTime function/method'
         );
+
      $this->assertTrue(
         method_exists($socialAuth, 'getChangedTime'),
           'SocialAuth does not implements getChangedTime function/method'
@@ -98,5 +91,3 @@ class EntityTest extends UnitTestCase {
      $this->assertEquals('2019-06-10T10:06:11+00:00', $socialAuth->getChangedTime());
    }
 }
-
- ?>
