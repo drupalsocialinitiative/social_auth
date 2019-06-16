@@ -1,19 +1,21 @@
 <?php
 
 use Drupal\Tests\UnitTestCase;
-use PHPUnit\Framework\TestCase;
 use Drupal\social_auth\AuthManager\OAuth2Manager;
 use Drupal\Core\Config\Config;
 use Drupal\Core\Logger\LoggerChannelFactoryInterface;
-use Drupal\social_api\AuthManager\OAuth2Manager as BaseOAuth2Manager;
 use Drupal\social_auth\AuthManager\OAuth2ManagerInterface;
 
+/**
+ * Defines AuthManager Test class.
+ */
 class AuthManagerTest extends UnitTestcase {
 
   /**
-   * tests for class OAuth2Manager
+   * Tests for class OAuth2Manager.
    */
-  public function testOAuth2Manager () {
+  public function testOAuth2Manager() {
+
     $scopes = FALSE;
     $endPoints = "drupal123";
 
@@ -21,9 +23,16 @@ class AuthManagerTest extends UnitTestcase {
     $settings = $this->createMock(Config::class);
 
     $authManager = $this->getMockBuilder(OAuth2Manager::class)
-                       ->setConstructorArgs(array($settings, $logger_factory))
-                       ->setMethods(['getScopes', 'getEndPoints', 'settings', 'get'])
-                       ->getMockForAbstractClass();
+      ->setConstructorArgs([$settings,
+        $logger_factory,
+      ])
+      ->setMethods([(
+        'getScopes',
+        'getEndPoints',
+        'settings',
+        'get',
+      ])
+      ->getMockForAbstractClass();
 
     $this->assertTrue(
           method_exists($authManager, 'getExtraDetails'),
@@ -41,45 +50,29 @@ class AuthManagerTest extends UnitTestcase {
     );
 
     $settings->method('get')
-             ->willReturn('drupal123');
+      ->willReturn('drupal123');
 
-    if ($scopes === FALSE){
+    if ($scopes === FALSE) {
       $scopes = $settings->get('scopes');
     }
     $authManager->method('getScopes')
-                     ->willReturn($scopes);
+      ->willReturn($scopes);
 
     if ($endPoints === FALSE) {
       $endPoints = $settings->get('endpoints');
     }
     $authManager->method('getEndPoints')
-                     ->willReturn($endPoints);
+      ->willReturn($endPoints);
 
     $this->assertSame('drupal123', $authManager->getScopes());
     $this->assertSame('drupal123', $authManager->getEndPoints());
   }
 
-  // public function testGetExtraDetails ($method = 'GET', $domain = NULL) {
-  //   $collection->method('getEndPoints')
-  //                    ->willReturn($this->endPoints);
-  //   $endpoints = $this->collection->getEndPoints();
-  //   $data = [];
-  //   if ($endpoints) {
-  //     // Iterates through endpoints define in settings and retrieves them.
-  //     foreach (explode(PHP_EOL, $endpoints) as $endpoint) {
-  //       // Endpoint is set as path/to/endpoint|name.
-  //       $parts = explode('|', $endpoint);
-  //
-  //       $data[$parts[0]] = $this->collection->requestEndPoint($method, $parts[0], $domain);
-  //     }
-  //     return json_encode($data);
-  //   }
-  // }
-
   /**
-   * tests for clas OAuth2ManagerInterface
+   * Tests for clas OAuth2ManagerInterface.
    */
-  public function testOAuth2ManagerInterface () {
+  public function testOAuth2ManagerInterface() {
+
     $method = "drupalmethod";
     $path = "drupalpath";
 
@@ -107,4 +100,5 @@ class AuthManagerTest extends UnitTestcase {
             'OAuth2ManagerInterface does not have getEndPoints function/method'
     );
   }
+
 }
