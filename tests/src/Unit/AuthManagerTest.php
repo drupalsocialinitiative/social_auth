@@ -8,8 +8,11 @@ use Drupal\Core\Logger\LoggerChannelFactoryInterface;
 use Drupal\social_api\AuthManager\OAuth2Manager as BaseOAuth2Manager;
 use Drupal\social_auth\AuthManager\OAuth2ManagerInterface;
 
-
 class AuthManagerTest extends UnitTestcase {
+
+  /**
+   * tests for class OAuth2Manager
+   */
   public function testOAuth2Manager () {
     $scopes = FALSE;
     $endPoints = "drupal123";
@@ -73,6 +76,9 @@ class AuthManagerTest extends UnitTestcase {
   //   }
   // }
 
+  /**
+   * tests for clas OAuth2ManagerInterface
+   */
   public function testOAuth2ManagerInterface () {
     $method = "drupalmethod";
     $path = "drupalpath";
@@ -102,5 +108,3 @@ class AuthManagerTest extends UnitTestcase {
     );
   }
 }
-
- ?>
