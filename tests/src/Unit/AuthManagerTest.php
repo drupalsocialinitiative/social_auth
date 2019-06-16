@@ -2,7 +2,6 @@
 
 use Drupal\Tests\UnitTestCase;
 use PHPUnit\Framework\TestCase;
-//OAuth2Manager
 use Drupal\social_auth\AuthManager\OAuth2Manager;
 use Drupal\Core\Config\Config;
 use Drupal\Core\Logger\LoggerChannelFactoryInterface;
@@ -11,43 +10,30 @@ use Drupal\social_auth\AuthManager\OAuth2ManagerInterface;
 
 
 class AuthManagerTest extends UnitTestcase {
-
-  /**
-   * __construct function
-   */
-  public function __construct() {
-       parent::__construct();
-   }
-
-  /**
-   * {@inheritdoc}
-   */
-
-  public function setUp() {
-    parent::setUp();
-  }
-
-
   public function testOAuth2Manager () {
+    $scopes = FALSE;
+    $endPoints = "drupal123";
+
     $logger_factory = $this->createMock(LoggerChannelFactoryInterface::class);
     $settings = $this->createMock(Config::class);
-    $collection = $this->getMockBuilder(OAuth2Manager::class)
+
+    $authManager = $this->getMockBuilder(OAuth2Manager::class)
                        ->setConstructorArgs(array($settings, $logger_factory))
                        ->setMethods(['getScopes', 'getEndPoints', 'settings', 'get'])
                        ->getMockForAbstractClass();
 
-    $scopes = FALSE;
-    $endPoints = "drupal123";
     $this->assertTrue(
-          method_exists($collection, 'getExtraDetails'),
+          method_exists($authManager, 'getExtraDetails'),
             'OAuth2Manager does not have getExtraDetails function/method'
     );
+
     $this->assertTrue(
-          method_exists($collection, 'getScopes'),
+          method_exists($authManager, 'getScopes'),
             'OAuth2Manager does not have getScopes function/method'
     );
+
     $this->assertTrue(
-          method_exists($collection, 'getEndPoints'),
+          method_exists($authManager, 'getEndPoints'),
             'OAuth2Manager does not have ggetEndPoints function/method'
     );
 
@@ -57,18 +43,17 @@ class AuthManagerTest extends UnitTestcase {
     if ($scopes === FALSE){
       $scopes = $settings->get('scopes');
     }
-
-    $collection->method('getScopes')
+    $authManager->method('getScopes')
                      ->willReturn($scopes);
 
     if ($endPoints === FALSE) {
       $endPoints = $settings->get('endpoints');
     }
-    $collection->method('getEndPoints')
+    $authManager->method('getEndPoints')
                      ->willReturn($endPoints);
 
-    $this->assertSame('drupal123', $collection->getScopes());
-    $this->assertSame('drupal123', $collection->getEndPoints());
+    $this->assertSame('drupal123', $authManager->getScopes());
+    $this->assertSame('drupal123', $authManager->getEndPoints());
   }
 
   // public function testGetExtraDetails ($method = 'GET', $domain = NULL) {
@@ -91,25 +76,30 @@ class AuthManagerTest extends UnitTestcase {
   public function testOAuth2ManagerInterface () {
     $method = "drupalmethod";
     $path = "drupalpath";
-    $collections = $this->getMock(OAuth2ManagerInterface::class);
+
+    $authManagerInterface = $this->getMock(OAuth2ManagerInterface::class);
+
+    $authManagerInterface->requestEndPoint($method, $path, $domain = NULL, $options = []);
+
     $this->assertTrue(
-          method_exists($collections, 'getExtraDetails'),
+          method_exists($authManagerInterface, 'getExtraDetails'),
             'OAuth2ManagerInterface does not have getExtraDetails function/method'
     );
+
     $this->assertTrue(
-          method_exists($collections, 'requestEndPoint'),
+          method_exists($authManagerInterface, 'requestEndPoint'),
             'OAuth2ManagerInterface does not have requestEndPoint function/method'
     );
+
     $this->assertTrue(
-          method_exists($collections, 'getScopes'),
+          method_exists($authManagerInterface, 'getScopes'),
             'OAuth2ManagerInterface does not have getScopes function/method'
     );
+
     $this->assertTrue(
-          method_exists($collections, 'getEndPoints'),
+          method_exists($authManagerInterface, 'getEndPoints'),
             'OAuth2ManagerInterface does not have getEndPoints function/method'
     );
-    $options = array();
-    $collections->requestEndPoint($method, $path, $domain = NULL, $options = []);
   }
 }
 
