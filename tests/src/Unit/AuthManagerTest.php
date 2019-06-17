@@ -26,7 +26,7 @@ class AuthManagerTest extends UnitTestcase {
       ->setConstructorArgs([$settings,
         $logger_factory,
       ])
-      ->setMethods([(
+      ->setMethods([
         'getScopes',
         'getEndPoints',
         'settings',
