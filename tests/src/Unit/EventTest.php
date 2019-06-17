@@ -29,20 +29,9 @@ class EventTest extends UnitTestCase {
         $pluginId,
         $destination,
       ])
-      ->setMethods(['getDataHandler',
-        'getPluginId',
-        'getDestination',
-      ])
+      ->setMethods(null)
       ->getMock();
 
-    $beforeRedirectEvent->method('getPluginId')
-      ->willReturn($pluginId);
-
-    $beforeRedirectEvent->method('getDestination')
-      ->willReturn($destination);
-
-    $beforeRedirectEvent->method('getDataHandler')
-      ->willReturn($data_handler);
 
     $this->assertTrue(
       method_exists($beforeRedirectEvent, 'getDataHandler'),
@@ -79,22 +68,11 @@ class EventTest extends UnitTestCase {
         $pluginId,
         $error,
       ])
-      ->setMethods(['getDataHandler',
-        'getPluginId',
-        'getError',
-      ])
+      ->setMethods(null)
       ->getMock();
+
     // parent::__construct($data_handler, $pluginId, $error);.
     $failedAuthenticationEvent->setResponse($response);
-
-    $failedAuthenticationEvent->method('getError')
-      ->willReturn($error);
-
-    $failedAuthenticationEvent->method('getPluginId')
-      ->willReturn($pluginId);
-
-    $failedAuthenticationEvent->method('getDataHandler')
-      ->willReturn($data_handler);
 
     $this->assertTrue(
       method_exists($failedAuthenticationEvent, 'getDataHandler'),
@@ -174,13 +152,8 @@ class EventTest extends UnitTestCase {
 
     $userEvent = $this->getMockBuilder(UserEvent::class)
       ->setConstructorArgs([$user, $pluginId])
+      ->setMethods(null)
       ->getMock();
-
-    $userEvent->method('getPluginId')
-      ->willReturn($pluginId);
-
-    $userEvent->method('getUser')
-      ->willReturn($user);
 
     $this->assertTrue(
     method_exists($userEvent, 'getPluginId'),
@@ -206,11 +179,8 @@ class EventTest extends UnitTestCase {
 
     $userFieldsEvent = $this->getMockBuilder(UserFieldsEvent::class)
       ->setConstructorArgs([$user_fields, $pluginId])
-      ->setMethods(['getPluginId'])
+      ->setMethods(null)
       ->getMock();
-
-    $userFieldsEvent->method('getPluginId')
-      ->willReturn($pluginId);
 
     $userFieldsEvent->setUserFields($user_fields);
 
