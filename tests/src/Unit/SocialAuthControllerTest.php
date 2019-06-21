@@ -17,7 +17,7 @@ use Symfony\Component\HttpFoundation\RequestStack;
 /**
  * Defines Controller Test Class.
  */
-class ControllerTest extends UnitTestCase {
+class SocialAuthControllerTest extends UnitTestCase {
 
   /**
    * Tests for class SocialAuthController.
