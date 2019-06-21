@@ -6,7 +6,7 @@ use Drupal\social_auth\Entity\SocialAuth;
 /**
  * Defines Test Class for Social Auth Entity.
  */
-class EntityTest extends UnitTestCase {
+class SocialAuthEntityTest extends UnitTestCase {
 
   /**
    * Tests for class SocialAuth.
