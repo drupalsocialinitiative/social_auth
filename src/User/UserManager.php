@@ -108,36 +108,31 @@ class UserManager extends SocialApiUserManager {
   /**
    * Creates a new user.
    *
-   * @param string $name
-   *   The user's name.
-   * @param string $email
-   *   The user's email address.
-   * @param string $provider_user_id
-   *   The unique id returned by the user.
-   * @param string $token
-   *   The access token for making additional API calls.
-   * @param string|bool $picture_url
-   *   The user's picture.
-   * @param string $data
-   *   The additional user_data to be stored in database.
+   * @param \Drupal\social_auth\User\SocialAuthUserInterface $user
+   *   The data of the user to be created.
    *
    * @return \Drupal\user\UserInterface|null
    *   The Drupal user if successful
    *   Null otherwise.
    */
-  public function createNewUser($name, $email, $provider_user_id, $token, $picture_url, $data) {
-    $drupal_user = $this->createUser($name, $email);
+  public function createNewUser(SocialAuthUserInterface $user) {
+    // Download profile picture for the newly created user.
+    if ($user->getPictureUrl()) {
+      $this->setProfilePic($user);
+    }
+
+    $drupal_user = $this->createUser($user);
 
     if ($drupal_user) {
-      // Download profile picture for the newly created user.
-      if ($picture_url) {
-        $this->setProfilePic($drupal_user, $picture_url, $provider_user_id);
-      }
-
       // If the new user could be registered.
-      $this->addUserRecord($drupal_user->id(), $provider_user_id, $token, $data);
+      $this->addUserRecord($drupal_user->id(),
+                           $user->getProviderId(),
+                           $user->getToken(),
+                           $user->getAdditionalData());
 
-      return $drupal_user;
+      if ($this->saveUser($drupal_user)) {
+        return $drupal_user;
+      }
     }
 
     return NULL;
@@ -146,21 +141,24 @@ class UserManager extends SocialApiUserManager {
   /**
    * Create a new user account.
    *
-   * @param string $name
-   *   User's name on Provider.
-   * @param string $email
-   *   User's email address.
+   * @param \Drupal\social_auth\User\SocialAuthUserInterface $user
+   *   The data of the user to be created.
    *
    * @return \Drupal\user\Entity\User|false
    *   Drupal user account if user was created
    *   False otherwise
    */
-  public function createUser($name, $email) {
+  public function createUser(SocialAuthUserInterface $user) {
+
+    $name = $user->getName();
+    $email = $user->getEmail();
+
     // Make sure we have everything we need.
     if (!$name) {
       $this->loggerFactory
         ->get($this->getPluginId())
         ->error('Failed to create user. Name: @name', ['@name' => $name]);
+
       return FALSE;
     }
 
@@ -168,7 +166,8 @@ class UserManager extends SocialApiUserManager {
     if ($this->isRegistrationDisabled()) {
       $this->loggerFactory
         ->get($this->getPluginId())
-        ->warning('Failed to create user. User registration is disabled. Name: @name, email: @email.', ['@name' => $name, '@email' => $email]);
+        ->warning('Failed to create user. User registration is disabled. Name: @name, email: @email.',
+          ['@name' => $name, '@email' => $email]);
 
       $this->messenger->addError($this->t('User registration is disabled, please contact the administrator.'));
 
@@ -181,7 +180,7 @@ class UserManager extends SocialApiUserManager {
     // Try to save the new user account.
     try {
       // Initializes the user fields.
-      $fields = $this->getUserFields($name, $email, $langcode);
+      $fields = $this->getUserFields($user, $langcode);
 
       /** @var \Drupal\user\Entity\User $new_user */
       $new_user = $this->entityTypeManager
@@ -198,7 +197,7 @@ class UserManager extends SocialApiUserManager {
         ]);
 
       // Dispatches SocialAuthEvents::USER_CREATED event.
-      $event = new UserEvent($new_user, $this->getPluginId());
+      $event = new UserEvent($new_user, $this->getPluginId(), $user);
       $this->eventDispatcher->dispatch(SocialAuthEvents::USER_CREATED, $event);
 
       return $new_user;
@@ -210,6 +209,7 @@ class UserManager extends SocialApiUserManager {
     }
 
     $this->messenger->addError($this->t('You could not be authenticated, please contact the administrator.'));
+
     return FALSE;
   }
 
@@ -315,39 +315,49 @@ class UserManager extends SocialApiUserManager {
   }
 
   /**
-   * Downloads and sets user profile picture.
-   *
-   * @param \Drupal\user\UserInterface $drupal_user
-   *   User object to update the profile picture for.
-   * @param string $picture_url
-   *   Absolute URL where the picture will be downloaded from.
-   * @param string $id
-   *   User's ID.
+   * Saves the Drupal user entity.
    *
    * @return bool
    *   True if picture was successfully set.
    *   False otherwise.
    */
-  public function setProfilePic(UserInterface $drupal_user, $picture_url, $id) {
+  protected function saveUser(UserInterface $drupal_user) {
+    try {
+      $drupal_user->save();
 
-    // Try to download the profile picture and add it to user fields.
+      return TRUE;
+    }
+    catch (EntityStorageException $ex) {
+      $this->loggerFactory
+        ->get($this->getPluginId())
+        ->error(
+          'Failed to save user. Exception: @message',
+            ['@message' => $ex->getMessage()]
+        );
+
+      return FALSE;
+    }
+  }
+
+  /**
+   * Downloads and sets user profile picture.
+   *
+   * @param \Drupal\social_auth\User\SocialAuthUserInterface $user
+   *   The Social Auth User object.
+   *
+   * @return bool
+   *   True if picture was successfully set.
+   *   False otherwise.
+   */
+  protected function setProfilePic(SocialAuthUserInterface $user) {
+    $picture_url = $user->getPictureUrl();
+    $id = $user->getProviderId();
+
+    // Tries to download the profile picture and add it to Social Auth User.
     if ($this->userPictureEnabled()) {
       $file = $this->downloadProfilePic($picture_url, $id);
       if ($file) {
-        $drupal_user->set('user_picture', $file->id());
-
-        try {
-          $drupal_user->save();
-
-          return TRUE;
-        }
-        catch (EntityStorageException $ex) {
-          $this->loggerFactory
-            ->get($this->getPluginId())
-            ->error('Failed to save user picture. Exception: @message', ['@message' => $ex->getMessage()]);
-
-          return FALSE;
-        }
+        $user->setPicture($file->id());
       }
     }
 
@@ -394,6 +404,7 @@ class UserManager extends SocialApiUserManager {
           '@directory' => $directory,
           '@provider' => $this->getPluginId(),
         ]);
+
       return FALSE;
     }
 
@@ -458,31 +469,30 @@ class UserManager extends SocialApiUserManager {
   /**
    * Returns an array of fields to initialize the creation of the user.
    *
-   * @param string $name
-   *   User's name on Provider.
-   * @param string $email
-   *   User's email address.
+   * @param \Drupal\social_auth\User\SocialAuthUserInterface $user
+   *   The data of the user to be created.
    * @param string $langcode
    *   The current UI language.
    *
    * @return array
    *   Fields to initialize for the user creation.
    */
-  protected function getUserFields($name, $email, $langcode) {
+  protected function getUserFields(SocialAuthUserInterface $user, $langcode) {
     $fields = [
-      'name' => $this->generateUniqueUsername($name),
-      'mail' => $email,
-      'init' => $email,
+      'name' => $this->generateUniqueUsername($user->getName()),
+      'mail' => $user->getEmail(),
+      'init' => $user->getEmail(),
       'pass' => $this->userPassword(32),
       'status' => $this->getNewUserStatus(),
       'langcode' => $langcode,
       'preferred_langcode' => $langcode,
       'preferred_admin_langcode' => $langcode,
+      'user_picture' => $user->getPicture(),
     ];
 
     // Dispatches SocialAuthEvents::USER_FIELDS, so that other modules can
     // update this array before an user is saved.
-    $event = new UserFieldsEvent($fields, $this->getPluginId());
+    $event = new UserFieldsEvent($fields, $this->getPluginId(), $user);
     $this->eventDispatcher->dispatch(SocialAuthEvents::USER_FIELDS, $event);
     $fields = $event->getUserFields();
 
@@ -498,6 +508,7 @@ class UserManager extends SocialApiUserManager {
    */
   protected function userPictureEnabled() {
     $field_definitions = $this->entityFieldManager->getFieldDefinitions('user', 'user');
+
     return isset($field_definitions['user_picture']);
   }
 
