@@ -12,7 +12,7 @@ function social_auth_post_update_add_encryption_to_access_tokens(&$sandbox = NUL
 		$user->setToken($token);
 		$user->save();
 		$result = t('Token %nid saved', [
-    	'%nid' => $field
+    	'%nid' => $user
     	  ->id(),
   		]);
 	}
