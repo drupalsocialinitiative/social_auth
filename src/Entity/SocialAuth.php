@@ -2,11 +2,11 @@
 
 namespace Drupal\social_auth\Entity;
 
-use Drupal\Core\Entity\ContentEntityBase;
 use Drupal\Core\Field\BaseFieldDefinition;
 use Drupal\Core\Entity\EntityTypeInterface;
 use Drupal\Core\Entity\ContentEntityInterface;
 use Drupal\social_api\Entity\SocialApi;
+
 /**
  * Defines the Social Auth entity.
  *
