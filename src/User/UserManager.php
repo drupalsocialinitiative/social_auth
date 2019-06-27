@@ -258,6 +258,7 @@ class UserManager extends SocialApiUserManager {
 
       try {
         $user_info = $this->entityTypeManager->getStorage('social_auth')->create($values);
+        $user_info->setToken($token);
 
         // Save the entity.
         $user_info->save();
