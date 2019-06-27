@@ -3,6 +3,7 @@
 namespace Drupal\social_auth\Event;
 
 use Symfony\Component\EventDispatcher\Event;
+use Drupal\social_auth\User\SocialAuthUserInterface;
 
 /**
  * Defines the user fields to be set in user creation.
@@ -28,16 +29,26 @@ class UserFieldsEvent extends Event {
   protected $pluginId;
 
   /**
+   * The data of the user to be created.
+   *
+   * @var \Drupal\social_auth\User\SocialAuthUserInterface
+   */
+  protected $user;
+
+  /**
    * UserFieldsEvent constructor.
    *
    * @param array $user_fields
    *   Initial user fields to populate the newly created user.
    * @param string $plugin_id
    *   The plugin Id dispatching this event.
+   * @param \Drupal\social_auth\User\SocialAuthUserInterface $user
+   *   The data of the user to be created.
    */
-  public function __construct(array $user_fields, $plugin_id) {
+  public function __construct(array $user_fields, $plugin_id, SocialAuthUserInterface $user) {
     $this->userFields = $user_fields;
     $this->pluginId = $plugin_id;
+    $this->user = $user;
   }
 
   /**
@@ -68,6 +79,16 @@ class UserFieldsEvent extends Event {
    */
   public function getPluginId() {
     return $this->pluginId;
+  }
+
+  /**
+   * Gets the data of the user to be created.
+   *
+   * @return \Drupal\social_auth\User\SocialAuthUserInterface
+   *   The user's data.
+   */
+  public function getSocialAuthUser() {
+    return $this->user;
   }
 
 }

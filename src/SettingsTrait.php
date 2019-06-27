@@ -123,7 +123,8 @@ trait SettingsTrait {
    *   Value 1 means that visitors can register new accounts without approval.
    */
   protected function getNewUserStatus() {
-    return (int) $this->configFactory->get('user.settings')->get('register') == 'visitors';
+    $allowed = $this->configFactory->get('user.settings')->get('register');
+    return (int) ($allowed === 'visitors');
   }
 
   /**
