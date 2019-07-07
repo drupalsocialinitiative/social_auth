@@ -2,10 +2,10 @@
 
 namespace Drupal\social_auth\Entity;
 
-use Drupal\Core\Entity\ContentEntityBase;
 use Drupal\Core\Field\BaseFieldDefinition;
 use Drupal\Core\Entity\EntityTypeInterface;
 use Drupal\Core\Entity\ContentEntityInterface;
+use Drupal\social_api\Entity\SocialApi;
 
 /**
  * Defines the Social Auth entity.
@@ -25,7 +25,7 @@ use Drupal\Core\Entity\ContentEntityInterface;
  *   },
  * )
  */
-class SocialAuth extends ContentEntityBase implements ContentEntityInterface {
+class SocialAuth extends SocialApi implements ContentEntityInterface {
 
   /**
    * Returns the Drupal user id.
@@ -35,30 +35,6 @@ class SocialAuth extends ContentEntityBase implements ContentEntityInterface {
    */
   public function getUserId() {
     return $this->get('user_id')->getValue()[0]['target_id'];
-  }
-
-  /**
-   * Sets the access token.
-   *
-   * @param string $token
-   *   The serialized access token.
-   *
-   * @return \Drupal\social_auth\Entity\SocialAuth
-   *   Drupal Social Auth Entity.
-   */
-  public function setToken($token) {
-    $this->set('token', $token);
-    return $this;
-  }
-
-  /**
-   * Returns the serialized access token.
-   *
-   * @return string
-   *   The serialized access token.
-   */
-  public function getToken() {
-    return $this->get('token')->value;
   }
 
   /**
