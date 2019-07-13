@@ -23,10 +23,13 @@ function social_auth_theme() {
  */
 function social_auth_preprocess_login_with(&$variables) {
   $request = \Drupal::request();
-  if ($request->query->has('destination')) {
-    $variables['destination'] = $request->query->get('destination');
-  }
+
+  $variables['destination'] = $request->get('destination');
   $variables['base_path'] = base_path();
+
+  $variables['#cache'] = [
+    'contexts' => ['url.query_args:destination'],
+  ];
 }
 
 /**
@@ -51,8 +54,9 @@ function social_auth_user_delete(EntityInterface $account) {
   }
   catch (\Exception $e) {
     \Drupal::logger('social_auth')
-      ->error('Could not delete Social Auth users for user @uid', [
+      ->error('Could not delete Social Auth users for user @uid. Error @error', [
         '@uid' => $account->id(),
+        '@error' => $e->getMessage(),
       ]);
   }
 }
