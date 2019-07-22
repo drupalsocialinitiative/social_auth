@@ -76,7 +76,7 @@ class SocialAuthSettingsForm extends ConfigFormBase {
       '#type' => 'textfield',
       '#required' => TRUE,
       '#title' => $this->t('Post login path'),
-      '#description' => $this->t('Path where the user should be redirected after successful login. It must begin with <em>/, #</em> or <em>?</em>.'),
+      '#description' => $this->t('Path where the user should be redirected after a successful login. It must begin with <em>/, #</em> or <em>?</em>.'),
       '#default_value' => $social_auth_config->get('post_login'),
     ];
 
@@ -124,6 +124,19 @@ class SocialAuthSettingsForm extends ConfigFormBase {
     }
 
     return parent::buildForm($form, $form_state);
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function validateForm(array &$form, FormStateInterface $form_state) {
+    $values = $form_state->getValues();
+    $post_login = $values['post_login'];
+
+    // If it is not a route and value does not start with '/', '#', or '?'.
+    if (!in_array($post_login[0], ["/", "#", "?"])) {
+      $form_state->setErrorByName('post_login', $this->t('The path is not valid. It must begin with <em>/, #</em> or <em>?</em>'));
+    }
   }
 
   /**
