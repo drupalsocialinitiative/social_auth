@@ -133,7 +133,7 @@ class SocialAuthSettingsForm extends ConfigFormBase {
     $values = $form_state->getValues();
     $post_login = $values['post_login'];
 
-    // If it is not a route and value does not start with '/', '#', or '?'.
+    // If it is not a valid path.
     if (!in_array($post_login[0], ["/", "#", "?"])) {
       $form_state->setErrorByName('post_login', $this->t('The path is not valid. It must begin with <em>/, #</em> or <em>?</em>'));
     }

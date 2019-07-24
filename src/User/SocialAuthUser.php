@@ -111,14 +111,14 @@ class SocialAuthUser implements SocialAuthUserInterface {
   /**
    * {@inheritdoc}
    */
-  public function getFistName() {
+  public function getFirstName() {
     return $this->firstName;
   }
 
   /**
    * {@inheritdoc}
    */
-  public function setFistName($first_name) {
+  public function setFirstName($first_name) {
     $this->firstName = $first_name;
   }
 
