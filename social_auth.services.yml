@@ -23,6 +23,7 @@ services:
       - '@language_manager'
       - '@event_dispatcher'
       - '@token'
+      - '@file_system'
 
   social_auth.data_handler:
     class: Drupal\social_auth\SocialAuthDataHandler
