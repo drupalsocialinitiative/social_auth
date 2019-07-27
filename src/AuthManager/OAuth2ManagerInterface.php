@@ -19,7 +19,7 @@ interface OAuth2ManagerInterface extends BaseOAuth2ManagerInterface {
    * @param string|null $domain
    *   The domain to request.
    *
-   * @return array
+   * @return array|null
    *   The extra details gotten from provider.
    */
   public function getExtraDetails($method = 'GET', $domain = NULL);

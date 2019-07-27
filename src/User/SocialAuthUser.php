@@ -66,7 +66,7 @@ class SocialAuthUser implements SocialAuthUserInterface {
   /**
    * User's extra data. Store in additional_data field in social_auth entity.
    *
-   * @var string|null
+   * @var array|null
    */
   protected $additionalData;
 
@@ -90,7 +90,7 @@ class SocialAuthUser implements SocialAuthUserInterface {
    *   The access token for making API calls.
    * @param string|bool $picture_url
    *   The user's picture.
-   * @param string $additional_data
+   * @param array|null $additional_data
    *   The additional user data to be stored in database.
    */
   public function __construct($name,

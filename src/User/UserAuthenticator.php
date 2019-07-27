@@ -106,15 +106,15 @@ class UserAuthenticator extends SocialApiUserAuthenticator {
    *   The unique id returned by the user.
    * @param string $token
    *   The access token for making additional API calls.
-   * @param string|bool $picture_url
+   * @param string|null $picture_url
    *   The user's picture.
-   * @param string $data
-   *   The additional user_data to be stored in database.
+   * @param array|null $data
+   *   The additional user data to be stored in database.
    *
    * @return \Symfony\Component\HttpFoundation\RedirectResponse
    *   A redirect response.
    */
-  public function authenticateUser($name, $email, $provider_user_id, $token, $picture_url = FALSE, $data = '') {
+  public function authenticateUser($name, $email, $provider_user_id, $token, $picture_url = NULL, $data = NULL) {
 
     // Checks for record in Social Auth entity.
     $user_id = $this->userManager->getDrupalUserId($provider_user_id);
@@ -166,7 +166,7 @@ class UserAuthenticator extends SocialApiUserAuthenticator {
    *   The unique id returned by the user.
    * @param string $token
    *   The access token for making additional API calls.
-   * @param string $data
+   * @param array|null $data
    *   The additional user_data to be stored in database.
    */
   public function associateNewProvider($provider_user_id, $token, $data) {
@@ -222,7 +222,7 @@ class UserAuthenticator extends SocialApiUserAuthenticator {
    *   The unique id returned by the user.
    * @param string $token
    *   The access token for making additional API calls.
-   * @param string $data
+   * @param array|null $data
    *   The additional user_data to be stored in database.
    *
    * @return bool

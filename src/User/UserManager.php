@@ -20,6 +20,7 @@ use Drupal\social_auth\Event\UserEvent;
 use Drupal\social_auth\SettingsTrait;
 use Drupal\user\UserInterface;
 use Symfony\Component\EventDispatcher\EventDispatcherInterface;
+use Drupal\social_auth\Entity\SocialAuth;
 
 /**
  * Manages database related tasks.
@@ -234,7 +235,7 @@ class UserManager extends SocialApiUserManager {
    *   Unique Social ID returned by social network.
    * @param string $token
    *   For making API calls.
-   * @param string $user_data
+   * @param array|null $user_data
    *   Additional user data collected.
    *
    * @return true
@@ -265,11 +266,11 @@ class UserManager extends SocialApiUserManager {
         'plugin_id' => $this->pluginId,
         'provider_user_id' => $provider_user_id,
         'additional_data' => $user_data,
+        'token' => $token,
       ];
 
       try {
-        $user_info = $this->entityTypeManager->getStorage('social_auth')->create($values);
-        $user_info->setToken($token);
+        $user_info = SocialAuth::create($values);
 
         // Save the entity.
         $user_info->save();

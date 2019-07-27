@@ -73,7 +73,7 @@ abstract class OAuth2Manager extends BaseOAuth2Manager implements OAuth2ManagerI
         $data[$parts[1]] = $this->requestEndPoint($method, $parts[0], $domain);
       }
 
-      return json_encode($data);
+      return $data;
     }
 
     return NULL;
