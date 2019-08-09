@@ -2,8 +2,6 @@
 
 namespace Drupal\social_auth\AuthManager;
 
-use Drupal\Core\Config\Config;
-use Drupal\Core\Logger\LoggerChannelFactoryInterface;
 use Drupal\social_api\AuthManager\OAuth2Manager as BaseOAuth2Manager;
 
 /**
@@ -12,13 +10,6 @@ use Drupal\social_api\AuthManager\OAuth2Manager as BaseOAuth2Manager;
  * @package Drupal\social_auth
  */
 abstract class OAuth2Manager extends BaseOAuth2Manager implements OAuth2ManagerInterface {
-
-  /**
-   * Social Auth implementer settings.
-   *
-   * @var \Drupal\Core\Config\ImmutableConfig
-   */
-  protected $settings;
 
   /**
    * The scopes to be requested.
@@ -35,25 +26,11 @@ abstract class OAuth2Manager extends BaseOAuth2Manager implements OAuth2ManagerI
   protected $endPoints;
 
   /**
-   * The logger factory.
+   * The user returned by the provider.
    *
-   * @var \Drupal\Core\Logger\LoggerChannelFactory
+   * @var \League\OAuth2\Client\Provider\GenericResourceOwner|array|mixed
    */
-  protected $loggerFactory;
-
-  /**
-   * Constructor.
-   *
-   * @param \Drupal\Core\Config\Config $settings
-   *   The implementer settings.
-   * @param \Drupal\Core\Logger\LoggerChannelFactoryInterface $logger_factory
-   *   The logger factory.
-   */
-  public function __construct(Config $settings, LoggerChannelFactoryInterface $logger_factory) {
-    $this->settings = $settings;
-    $this->loggerFactory = $logger_factory;
-    $this->endPoints = $this->scopes = FALSE;
-  }
+  protected $user;
 
   /**
    * {@inheritdoc}
