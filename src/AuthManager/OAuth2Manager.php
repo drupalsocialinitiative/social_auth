@@ -14,14 +14,14 @@ abstract class OAuth2Manager extends BaseOAuth2Manager implements OAuth2ManagerI
   /**
    * The scopes to be requested.
    *
-   * @var string
+   * @var string|null
    */
   protected $scopes;
 
   /**
    * The end points to be requested.
    *
-   * @var string
+   * @var string|null
    */
   protected $endPoints;
 
@@ -60,7 +60,7 @@ abstract class OAuth2Manager extends BaseOAuth2Manager implements OAuth2ManagerI
    * {@inheritdoc}
    */
   public function getScopes() {
-    if ($this->scopes === FALSE) {
+    if ($this->scopes === NULL) {
       $this->scopes = $this->settings->get('scopes');
     }
 
@@ -71,7 +71,7 @@ abstract class OAuth2Manager extends BaseOAuth2Manager implements OAuth2ManagerI
    * {@inheritdoc}
    */
   public function getEndPoints() {
-    if ($this->endPoints === FALSE) {
+    if ($this->endPoints === NULL) {
       $this->endPoints = $this->settings->get('endpoints');
     }
 

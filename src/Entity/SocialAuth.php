@@ -2,11 +2,11 @@
 
 namespace Drupal\social_auth\Entity;
 
+use Drupal\Core\Entity\EntityStorageInterface;
 use Drupal\Core\Field\BaseFieldDefinition;
 use Drupal\Core\Entity\EntityTypeInterface;
 use Drupal\Core\Entity\ContentEntityInterface;
 use Drupal\social_api\Entity\SocialApi;
-use function GuzzleHttp\json_encode;
 
 /**
  * Defines the Social Auth entity.
@@ -31,14 +31,13 @@ class SocialAuth extends SocialApi implements ContentEntityInterface {
   /**
    * {@inheritdoc}
    */
-  public static function create(array $values = []) {
-
+  public static function preCreate(EntityStorageInterface $storage, array &$values) {
     $additional_data = $values['additional_data'] ?? NULL;
     if ($additional_data) {
-      $values['additional_data'] = static::serializeData($additional_data);
+      $values['additional_data'] = static::encode($additional_data);
     }
 
-    return parent::create($values);
+    return parent::preCreate($storage, $values);
   }
 
   /**
@@ -48,20 +47,20 @@ class SocialAuth extends SocialApi implements ContentEntityInterface {
    *   The user id.
    */
   public function getUserId() {
-    return $this->get('user_id')->value;
+    return $this->get('user_id')->target_id;
   }
 
   /**
    * Sets the additional data.
    *
    * @param array $data
-   *   The serialized additional data.
+   *   The additional data.
    *
    * @return \Drupal\social_auth\Entity\SocialAuth
    *   Drupal Social Auth Entity.
    */
   public function setAdditionalData(array $data) {
-    $this->set('additional_data', $this->serializeData($data));
+    $this->set('additional_data', $this->encode($data));
 
     return $this;
   }
@@ -70,12 +69,12 @@ class SocialAuth extends SocialApi implements ContentEntityInterface {
    * Returns the serialized additional data.
    *
    * @return array
-   *   The deserialized additional data.
+   *   The additional data.
    */
   public function getAdditionalData() {
-    $data = $this->get('additional_data')->value;
-
-    return $this->deserializeData($data);
+    return $this->hasField('additional_data') && !$this->get('additional_data')->isEmpty()
+      ? $this->decode($this->get('additional_data')->value)
+      : [];
   }
 
   /**
@@ -182,7 +181,7 @@ class SocialAuth extends SocialApi implements ContentEntityInterface {
   }
 
   /**
-   * Serializes array to store in the additional data field.
+   * Encodes array to store in the additional data field.
    *
    * @param array $data
    *   The additional data.
@@ -190,20 +189,20 @@ class SocialAuth extends SocialApi implements ContentEntityInterface {
    * @return string
    *   The serialized data.
    */
-  protected static function serializeData(array $data) {
+  protected static function encode(array $data) {
     return json_encode($data);
   }
 
   /**
-   * Deserializes string stored in the additional data field.
+   * Decodes string stored in the additional data field.
    *
    * @param string $data
-   *   The serialized additional data.
+   *   The encoded additional data.
    *
    * @return array
-   *   The deserialized data.
+   *   The decoded data.
    */
-  protected function deserializeData(string $data) {
+  protected function decode(string $data) {
     return json_decode($data, TRUE);
   }
 
