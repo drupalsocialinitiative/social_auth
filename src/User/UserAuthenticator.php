@@ -440,4 +440,14 @@ class UserAuthenticator extends SocialApiUserAuthenticator {
     $this->eventDispatcher->dispatch(SocialAuthEvents::BEFORE_REDIRECT, $event);
   }
 
+  /**
+   * Gets the response.
+   *
+   * @return string
+   *   Response
+   */
+  public function getResponse() {
+    return $this->response;
+  }
+
 }

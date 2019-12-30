@@ -18,6 +18,7 @@ use Drupal\social_auth\User\SocialAuthUser;
 use Drupal\social_auth\User\UserAuthenticator;
 use Drupal\social_auth\User\UserManager;
 use Drupal\Tests\UnitTestCase;
+use Symfony\Component\DependencyInjection\ContainerInterface;
 use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 
 /**
@@ -49,11 +50,30 @@ class SocialAuthUserTest extends UnitTestCase {
   protected $userAuthenticator;
 
   /**
+   * The mocked AccountProxyInterface.
+   *
+   * @var \Drupal\Core\Session\AccountProxyInterface
+   */
+  protected $currentUser;
+
+  /**
+   * The mocked Messenger service.
+   *
+   * @var \Drupal\Core\Messenger\MessengerInterface
+   */
+  protected $messenger;
+
+  /**
    * {@inheritdoc}
    */
   public function setUp() {
+
+    /** @var \Symfony\Component\DependencyInjection\ContainerInterface|\PHPUnit_Framework_MockObject_MockObject $container */
+    $container = $this->createMock(ContainerInterface::class);
+    \Drupal::setContainer($container);
+
     $config_factory = $this->createMock(ConfigFactoryInterface::class);
-    $current_user = $this->createMock(AccountProxyInterface::class);
+    $this->currentUser = $this->createMock(AccountProxyInterface::class);
     $data_handler = $this->createMock(SocialAuthDataHandler::class);
     $entity_field_manager = $this->createMock(EntityFieldManagerInterface::class);
     $entity_type_manager = $this->createMock(EntityTypeManagerInterface::class);
@@ -61,11 +81,10 @@ class SocialAuthUserTest extends UnitTestCase {
     $file_system = $this->createMock(FileSystemInterface::class);
     $language_manager = $this->createMock(LanguageManagerInterface::class);
     $logger_factory = $this->createMock(LoggerChannelFactoryInterface::class);
-    $messenger = $this->createMock(MessengerInterface::class);
+    $this->messenger = $this->createMock(MessengerInterface::class);
     $route_provider = $this->createMock(RouteProviderInterface::class);
     $token = $this->createMock(Token::class);
     $transliteration = $this->createMock(PhpTransliteration::class);
-    $user_manager = $this->createMock(UserManager::class);
 
     $name = 'test';
     $email = 'test@gmail.com';
@@ -87,7 +106,7 @@ class SocialAuthUserTest extends UnitTestCase {
 
     $this->userManager = $this->getMockBuilder(UserManager::class)
       ->setConstructorArgs([$entity_type_manager,
-        $messenger,
+        $this->messenger,
         $logger_factory,
         $config_factory,
         $entity_field_manager,
@@ -97,21 +116,25 @@ class SocialAuthUserTest extends UnitTestCase {
         $token,
         $file_system,
       ])
-      ->setMethods(NULL)
+      ->setMethods(['addUserRecord'])
       ->getMock();
 
     $this->userAuthenticator = $this->getMockBuilder(UserAuthenticator::class)
-      ->setConstructorArgs([$current_user,
-        $messenger,
+      ->setConstructorArgs([$this->currentUser,
+        $this->messenger,
         $logger_factory,
-        $user_manager,
+        $this->userManager,
         $data_handler,
         $config_factory,
         $route_provider,
         $event_dispatcher,
       ])
-      ->setMethods(NULL)
+      ->setMethods(['getLoginFormRedirection', 'getPostLoginRedirection'])
       ->getMock();
+
+    $this->currentUser->expects($this->any())
+      ->method('id')
+      ->will($this->returnValue(12345));
   }
 
   /**
@@ -282,6 +305,47 @@ class SocialAuthUserTest extends UnitTestCase {
   public function testGetData() {
     $this->socialAuthUser->addData('value2', 'AnotherInformation');
     $this->assertEquals('AnotherInformation', $this->socialAuthUser->getData('value2'));
+  }
+
+  /**
+   * If statement giving true scenario.
+   *
+   * @covers Drupal\social_auth\User\UserAuthenticator::associateNewProvider
+   */
+  public function testAssociateNewProviderTrue() {
+    $this->userManager->expects($this->any())
+      ->method('addUserRecord')
+      ->with($this->currentUser->id(), $this->isType('string'), $this->isType('string'), $this->isType('array'))
+      ->will($this->returnValue(TRUE));
+
+    $this->userAuthenticator->expects($this->any())
+      ->method('getPostLoginRedirection')
+      ->will($this->returnValue('post_redirect'));
+
+    $this->userAuthenticator->associateNewProvider('social_auth_test', 'd278127t8', ['test']);
+    $this->assertEquals('post_redirect', $this->userAuthenticator->getResponse());
+  }
+
+  /**
+   * If statement giving false scenario.
+   *
+   * @covers Drupal\social_auth\User\UserAuthenticator::associateNewProvider
+   */
+  public function testAssociateNewProviderFalse() {
+    $this->userManager->expects($this->any())
+      ->method('addUserRecord')
+      ->with($this->currentUser->id(), $this->isType('string'), $this->isType('string'), $this->isType('array'))
+      ->will($this->returnValue(FALSE));
+
+    $this->userAuthenticator->expects($this->any())
+      ->method('getLoginFormRedirection')
+      ->will($this->returnValue('form_redirect'));
+
+    $this->messenger->expects($this->exactly(1))
+      ->method('addError');
+
+    $this->userAuthenticator->associateNewProvider('social_auth_test2', 'vdsa2rrf', ['test2']);
+    $this->assertEquals('form_redirect', $this->userAuthenticator->getResponse());
   }
 
 }
