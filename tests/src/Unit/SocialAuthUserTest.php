@@ -8,6 +8,7 @@ use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\Core\File\FileSystemInterface;
 use Drupal\Core\Language\LanguageManagerInterface;
 use Drupal\Core\Logger\LoggerChannelFactoryInterface;
+use Drupal\Core\Logger\LoggerChannelInterface;
 use Drupal\Core\Messenger\MessengerInterface;
 use Drupal\Core\Routing\RouteProviderInterface;
 use Drupal\Core\Session\AccountProxyInterface;
@@ -18,8 +19,11 @@ use Drupal\social_auth\User\SocialAuthUser;
 use Drupal\social_auth\User\UserAuthenticator;
 use Drupal\social_auth\User\UserManager;
 use Drupal\Tests\UnitTestCase;
+use Drupal\user\Entity\User;
+use Drupal\user\UserInterface;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 use Symfony\Component\EventDispatcher\EventDispatcherInterface;
+use Symfony\Component\HttpFoundation\RedirectResponse;
 
 /**
  * Tests social_auth User.
@@ -57,11 +61,32 @@ class SocialAuthUserTest extends UnitTestCase {
   protected $currentUser;
 
   /**
+   * The mocked LoggerChannelFactoryInterface.
+   *
+   * @var \Drupal\Core\Logger\LoggerChannelFactoryInterface
+   */
+  protected $loggerFactory;
+
+  /**
    * The mocked Messenger service.
    *
    * @var \Drupal\Core\Messenger\MessengerInterface
    */
   protected $messenger;
+
+  /**
+   * The test provider user id.
+   *
+   * @var string
+   */
+  protected $providerUserId = 'some_id';
+
+  /**
+   * The test plugin id.
+   *
+   * @var string
+   */
+  protected $pluginId = 'social_auth_test';
 
   /**
    * {@inheritdoc}
@@ -80,7 +105,7 @@ class SocialAuthUserTest extends UnitTestCase {
     $event_dispatcher = $this->createMock(EventDispatcherInterface::class);
     $file_system = $this->createMock(FileSystemInterface::class);
     $language_manager = $this->createMock(LanguageManagerInterface::class);
-    $logger_factory = $this->createMock(LoggerChannelFactoryInterface::class);
+    $this->loggerFactory = $this->createMock(LoggerChannelFactoryInterface::class);
     $this->messenger = $this->createMock(MessengerInterface::class);
     $route_provider = $this->createMock(RouteProviderInterface::class);
     $token = $this->createMock(Token::class);
@@ -107,7 +132,7 @@ class SocialAuthUserTest extends UnitTestCase {
     $this->userManager = $this->getMockBuilder(UserManager::class)
       ->setConstructorArgs([$entity_type_manager,
         $this->messenger,
-        $logger_factory,
+        $this->loggerFactory,
         $config_factory,
         $entity_field_manager,
         $transliteration,
@@ -116,20 +141,32 @@ class SocialAuthUserTest extends UnitTestCase {
         $token,
         $file_system,
       ])
-      ->setMethods(['addUserRecord'])
+      ->setMethods(['addUserRecord',
+        'getDrupalUserId',
+        'loadUserByProperty',
+        'createNewUser',
+      ])
       ->getMock();
 
     $this->userAuthenticator = $this->getMockBuilder(UserAuthenticator::class)
       ->setConstructorArgs([$this->currentUser,
         $this->messenger,
-        $logger_factory,
+        $this->loggerFactory,
         $this->userManager,
         $data_handler,
         $config_factory,
         $route_provider,
         $event_dispatcher,
       ])
-      ->setMethods(['getLoginFormRedirection', 'getPostLoginRedirection'])
+      ->setMethods(['getLoginFormRedirection',
+        'getPostLoginRedirection',
+        'userLoginFinalize',
+        'isRegistrationDisabled',
+        'isApprovalRequired',
+        'redirectToUserForm',
+        'isAdminDisabled',
+        'isUserRoleDisabled',
+      ])
       ->getMock();
 
     $this->currentUser->expects($this->any())
@@ -308,11 +345,12 @@ class SocialAuthUserTest extends UnitTestCase {
   }
 
   /**
-   * If statement giving true scenario.
+   * Tests the associateNewProvider method with true returned.
    *
    * @covers Drupal\social_auth\User\UserAuthenticator::associateNewProvider
    */
   public function testAssociateNewProviderTrue() {
+    $redirect = new RedirectResponse('https://drupal.org/');
     $this->userManager->expects($this->any())
       ->method('addUserRecord')
       ->with($this->currentUser->id(), $this->isType('string'), $this->isType('string'), $this->isType('array'))
@@ -320,18 +358,19 @@ class SocialAuthUserTest extends UnitTestCase {
 
     $this->userAuthenticator->expects($this->any())
       ->method('getPostLoginRedirection')
-      ->will($this->returnValue('post_redirect'));
+      ->will($this->returnValue($redirect));
 
     $this->userAuthenticator->associateNewProvider('social_auth_test', 'd278127t8', ['test']);
-    $this->assertEquals('post_redirect', $this->userAuthenticator->getResponse());
+    $this->assertEquals($redirect, $this->userAuthenticator->getResponse());
   }
 
   /**
-   * If statement giving false scenario.
+   * Tests the associateNewProvider method with false returned.
    *
    * @covers Drupal\social_auth\User\UserAuthenticator::associateNewProvider
    */
   public function testAssociateNewProviderFalse() {
+    $redirect = new RedirectResponse('https://drupal.org/');
     $this->userManager->expects($this->any())
       ->method('addUserRecord')
       ->with($this->currentUser->id(), $this->isType('string'), $this->isType('string'), $this->isType('array'))
@@ -339,13 +378,670 @@ class SocialAuthUserTest extends UnitTestCase {
 
     $this->userAuthenticator->expects($this->any())
       ->method('getLoginFormRedirection')
-      ->will($this->returnValue('form_redirect'));
+      ->will($this->returnValue($redirect));
 
     $this->messenger->expects($this->exactly(1))
       ->method('addError');
 
     $this->userAuthenticator->associateNewProvider('social_auth_test2', 'vdsa2rrf', ['test2']);
-    $this->assertEquals('form_redirect', $this->userAuthenticator->getResponse());
+    $this->assertEquals($redirect, $this->userAuthenticator->getResponse());
+  }
+
+  /**
+   * Tests the checkProviderIsAssociated method with Drupal user not existing.
+   *
+   * @covers Drupal\social_auth\User\UserAuthenticator::checkProviderIsAssociated
+   */
+  public function testCheckProviderIsAssociatedNotExist() {
+    $this->userManager->expects($this->once())
+      ->method('getDrupalUserId')
+      ->with($this->providerUserId)
+      ->will($this->returnValue(FALSE));
+
+    $this->assertFalse($this->userAuthenticator->checkProviderIsAssociated($this->providerUserId));
+  }
+
+  /**
+   * Tests the checkProviderIsAssociated method with Drupal user existing.
+   *
+   * @covers Drupal\social_auth\User\UserAuthenticator::checkProviderIsAssociated
+   */
+  public function testCheckProviderIsAssociatedExist() {
+    $this->userManager->expects($this->once())
+      ->method('getDrupalUserId')
+      ->with($this->providerUserId)
+      ->will($this->returnValue(6721234));
+
+    $this->assertEquals(6721234, $this->userAuthenticator->checkProviderIsAssociated($this->providerUserId));
+  }
+
+  /**
+   * Tests the loginUser method with not active account.
+   *
+   * @covers Drupal\social_auth\User\UserAuthenticator::loginUser
+   */
+  public function testLoginUserNotActive() {
+    $user = $this->createMock(UserInterface::class);
+    $logger = $this->createMock(LoggerChannelInterface::class);
+    $user->expects($this->once())
+      ->method('isActive')
+      ->will($this->returnValue(FALSE));
+
+    $this->loggerFactory->expects($this->once())
+      ->method('get')
+      ->with($this->pluginId)
+      ->will($this->returnValue($logger));
+
+    $logger->expects($this->once())
+      ->method('warning')
+      ->with($this->anything());
+
+    $this->userAuthenticator->setPluginId($this->pluginId);
+    $this->assertFalse($this->userAuthenticator->loginUser($user));
+  }
+
+  /**
+   * Tests the loginUser method with active account.
+   *
+   * @covers Drupal\social_auth\User\UserAuthenticator::loginUser
+   */
+  public function testLoginUserActive() {
+    $user = $this->createMock(UserInterface::class);
+
+    $user->expects($this->once())
+      ->method('isActive')
+      ->will($this->returnValue(TRUE));
+
+    $this->userAuthenticator->expects($this->once())
+      ->method('userLoginFinalize')
+      ->with($user);
+
+    $this->userAuthenticator->setPluginId($this->pluginId);
+    $this->assertTrue($this->userAuthenticator->loginUser($user));
+  }
+
+  /**
+   * Tests the authenticateWithProvider method with successful authentication.
+   *
+   * @covers Drupal\social_auth\User\UserAuthenticator::authenticateWithProvider
+   */
+  public function testAuthenticateWithProviderSuccess() {
+    $user = $this->createMock(User::class);
+    $redirect = new RedirectResponse('https://drupal.org/');
+
+    $this->userManager->expects($this->once())
+      ->method('loadUserByProperty')
+      ->with('uid', 12345)
+      ->will($this->returnValue($user));
+
+    $this->userAuthenticator->expects($this->once())
+      ->method('isAdminDisabled')
+      ->with($this->anything())
+      ->will($this->returnValue(TRUE));
+
+    $this->messenger->expects($this->exactly(1))
+      ->method('addError');
+
+    $this->userAuthenticator->expects($this->any())
+      ->method('getLoginFormRedirection')
+      ->will($this->returnValue($redirect));
+
+    $this->assertTrue($this->userAuthenticator->authenticateWithProvider(12345));
+
+  }
+
+  /**
+   * Tests the authenticateWithProvider method with failure while loading user.
+   *
+   * @covers Drupal\social_auth\User\UserAuthenticator::authenticateWithProvider
+   */
+  public function testAuthenticateWithProviderFailLoading() {
+    $this->userManager->expects($this->once())
+      ->method('loadUserByProperty')
+      ->with('uid', 12345)
+      ->will($this->returnValue(NULL));
+
+    $this->assertFalse($this->userAuthenticator->authenticateWithProvider(12345));
+  }
+
+  /**
+   * Tests the authenticateWithProvider method with exception thrown.
+   *
+   * @covers Drupal\social_auth\User\UserAuthenticator::authenticateWithProvider
+   */
+  public function testAuthenticateWithProviderException() {
+    $logger = $this->createMock(LoggerChannelInterface::class);
+    $this->userManager->expects($this->once())
+      ->method('loadUserByProperty')
+      ->with('uid', 12345)
+      ->will($this->returnCallback(function () {
+               throw new \Exception('test');
+      }));
+
+    $this->loggerFactory->expects($this->once())
+      ->method('get')
+      ->with($this->pluginId)
+      ->will($this->returnValue($logger));
+
+    $logger->expects($this->once())
+      ->method('error')
+      ->with($this->anything());
+
+    $this->userAuthenticator->setPluginId($this->pluginId);
+    $this->assertFalse($this->userAuthenticator->authenticateWithProvider(12345));
+
+  }
+
+  /**
+   * Tests the authenticateNewUser method with not valid user.
+   *
+   * @covers Drupal\social_auth\User\UserAuthenticator::authenticateNewUser
+   */
+  public function testAuthenticateNewUserNotValid() {
+    $redirect = new RedirectResponse('https://drupal.org/');
+
+    $this->userAuthenticator->expects($this->once())
+      ->method('isRegistrationDisabled')
+      ->will($this->returnValue(TRUE));
+
+    $this->userAuthenticator->expects($this->any())
+      ->method('getLoginFormRedirection')
+      ->will($this->returnValue($redirect));
+
+    $this->userAuthenticator->authenticateNewUser(NULL);
+    $this->assertEquals($redirect, $this->userAuthenticator->getResponse());
+  }
+
+  /**
+   * Tests the authenticateNewUser method valid user and need admin approval.
+   *
+   * @covers Drupal\social_auth\User\UserAuthenticator::authenticateNewUser
+   */
+  public function testAuthenticateNewUserValidApproveNeed() {
+    $redirect = new RedirectResponse('https://drupal.org/');
+    $user = $this->createMock(UserInterface::class);
+
+    $this->userAuthenticator->expects($this->once())
+      ->method('isApprovalRequired')
+      ->will($this->returnValue(TRUE));
+
+    $this->userAuthenticator->expects($this->any())
+      ->method('getLoginFormRedirection')
+      ->will($this->returnValue($redirect));
+
+    $this->messenger->expects($this->exactly(1))
+      ->method('addWarning');
+
+    $this->userAuthenticator->authenticateNewUser($user);
+    $this->assertEquals($redirect, $this->userAuthenticator->getResponse());
+  }
+
+  /**
+   * Tests the authenticateNewUser method with valid user and fail logging in.
+   *
+   * @covers Drupal\social_auth\User\UserAuthenticator::authenticateNewUser
+   */
+  public function testAuthenticateNewUserValidFailLogin() {
+    $redirect = new RedirectResponse('https://drupal.org/');
+    $user = $this->createMock(UserInterface::class);
+    $logger = $this->createMock(LoggerChannelInterface::class);
+
+    $user->expects($this->once())
+      ->method('isActive')
+      ->will($this->returnValue(FALSE));
+
+    $this->loggerFactory->expects($this->once())
+      ->method('get')
+      ->with($this->pluginId)
+      ->will($this->returnValue($logger));
+
+    $logger->expects($this->once())
+      ->method('warning')
+      ->with($this->anything());
+
+    $this->userAuthenticator->expects($this->once())
+      ->method('isApprovalRequired')
+      ->will($this->returnValue(FALSE));
+
+    $this->userAuthenticator->expects($this->once())
+      ->method('isRegistrationDisabled')
+      ->will($this->returnValue(TRUE));
+
+    $this->userAuthenticator->expects($this->any())
+      ->method('getLoginFormRedirection')
+      ->will($this->returnValue($redirect));
+
+    $this->userAuthenticator->setPluginId($this->pluginId);
+    $this->userAuthenticator->authenticateNewUser($user);
+    $this->assertEquals($redirect, $this->userAuthenticator->getResponse());
+  }
+
+  /**
+   * Tests the authenticateNewUser method login and redirect to login form.
+   *
+   * @covers Drupal\social_auth\User\UserAuthenticator::authenticateNewUser
+   */
+  public function testAuthenticateNewUserValidLoginFormRedirect() {
+    $redirect = new RedirectResponse('https://drupal.org/');
+    $user = $this->createMock(UserInterface::class);
+
+    $this->userAuthenticator->expects($this->once())
+      ->method('isApprovalRequired')
+      ->will($this->returnValue(FALSE));
+
+    $user->expects($this->once())
+      ->method('isActive')
+      ->will($this->returnValue(TRUE));
+
+    $this->userAuthenticator->expects($this->once())
+      ->method('userLoginFinalize')
+      ->with($user);
+
+    $this->userAuthenticator->expects($this->any())
+      ->method('redirectToUserForm')
+      ->with($user)
+      ->will($this->returnValue($redirect));
+
+    $this->userAuthenticator->setPluginId($this->pluginId);
+    $this->userAuthenticator->authenticateNewUser($user);
+    $this->assertEquals($redirect, $this->userAuthenticator->getResponse());
+  }
+
+  /**
+   * Tests the authenticateNewUser method login and redirect to post login.
+   *
+   * @covers Drupal\social_auth\User\UserAuthenticator::authenticateNewUser
+   */
+  public function testAuthenticateNewUserValidLoginPostRedirect() {
+    $redirect = new RedirectResponse('https://drupal.org/');
+    $user = $this->createMock(UserInterface::class);
+
+    $this->userAuthenticator->expects($this->once())
+      ->method('isApprovalRequired')
+      ->will($this->returnValue(FALSE));
+
+    $user->expects($this->once())
+      ->method('isActive')
+      ->will($this->returnValue(TRUE));
+
+    $this->userAuthenticator->expects($this->once())
+      ->method('userLoginFinalize')
+      ->with($user);
+
+    $this->userAuthenticator->expects($this->any())
+      ->method('redirectToUserForm')
+      ->with($user)
+      ->will($this->returnValue(NULL));
+
+    $this->userAuthenticator->expects($this->any())
+      ->method('getPostLoginRedirection')
+      ->will($this->returnValue($redirect));
+
+    $this->userAuthenticator->setPluginId($this->pluginId);
+    $this->userAuthenticator->authenticateNewUser($user);
+    $this->assertEquals($redirect, $this->userAuthenticator->getResponse());
+  }
+
+  /**
+   * Tests the authenticateWithEmail method with account existing.
+   *
+   * @covers Drupal\social_auth\User\UserAuthenticator::authenticateWithEmail
+   */
+  public function testAuthenticateWithEmailAccountExist() {
+    $user = $this->createMock(User::class);
+    $redirect = new RedirectResponse('https://drupal.org/');
+    $this->userManager->expects($this->once())
+      ->method('loadUserByProperty')
+      ->with('mail', 'test@gmail.com')
+      ->will($this->returnValue($user));
+
+    $this->userAuthenticator->expects($this->once())
+      ->method('isAdminDisabled')
+      ->with($this->anything())
+      ->will($this->returnValue(TRUE));
+
+    $this->messenger->expects($this->exactly(1))
+      ->method('addError');
+
+    $this->userAuthenticator->expects($this->any())
+      ->method('getLoginFormRedirection')
+      ->will($this->returnValue($redirect));
+
+    $this->assertTrue($this->userAuthenticator->authenticateWithEmail('test@gmail.com', $this->providerUserId, '2873dgAS', ['test']));
+  }
+
+  /**
+   * Tests the authenticateWithEmail method with account not existing.
+   *
+   * @covers Drupal\social_auth\User\UserAuthenticator::authenticateWithEmail
+   */
+  public function testAuthenticateWithEmailAccountNoExist() {
+    $logger = $this->createMock(LoggerChannelInterface::class);
+    $this->userManager->expects($this->once())
+      ->method('loadUserByProperty')
+      ->with('mail', 'test@gmail.com')
+      ->will($this->returnCallback(function () {
+               throw new \Exception('test');
+      }));
+
+    $this->loggerFactory->expects($this->once())
+      ->method('get')
+      ->with($this->pluginId)
+      ->will($this->returnValue($logger));
+
+    $logger->expects($this->once())
+      ->method('error')
+      ->with($this->anything());
+
+    $this->userAuthenticator->setPluginId($this->pluginId);
+    $this->assertFalse($this->userAuthenticator->authenticateWithEmail('test@gmail.com', $this->providerUserId, '2873dgAS', ['test']));
+  }
+
+  /**
+   * Tests the authenticateExistingUser method with admin auth disabled.
+   *
+   * @covers Drupal\social_auth\User\UserAuthenticator::authenticateExistingUser
+   */
+  public function testAuthenticateExistingUserAdminDisabled() {
+    $user = $this->createMock(UserInterface::class);
+    $redirect = new RedirectResponse('https://drupal.org/');
+
+    $this->userAuthenticator->expects($this->once())
+      ->method('isAdminDisabled')
+      ->with($user)
+      ->will($this->returnValue(TRUE));
+
+    $this->messenger->expects($this->exactly(1))
+      ->method('addError');
+
+    $this->userAuthenticator->expects($this->any())
+      ->method('getLoginFormRedirection')
+      ->will($this->returnValue($redirect));
+
+    $this->userAuthenticator->authenticateExistingUser($user);
+    $this->assertEquals($redirect, $this->userAuthenticator->getResponse());
+  }
+
+  /**
+   * Tests the authenticateExistingUser method with user role auth disabled.
+   *
+   * @covers Drupal\social_auth\User\UserAuthenticator::authenticateExistingUser
+   */
+  public function testAuthenticateExistingUserRoleDisabled() {
+    $user = $this->createMock(UserInterface::class);
+    $redirect = new RedirectResponse('https://drupal.org/');
+
+    $this->userAuthenticator->expects($this->once())
+      ->method('isAdminDisabled')
+      ->with($user)
+      ->will($this->returnValue(FALSE));
+
+    $this->userAuthenticator->expects($this->once())
+      ->method('isUserRoleDisabled')
+      ->with($user)
+      ->will($this->returnValue(TRUE));
+
+    $this->messenger->expects($this->exactly(1))
+      ->method('addError');
+
+    $this->userAuthenticator->expects($this->any())
+      ->method('getLoginFormRedirection')
+      ->will($this->returnValue($redirect));
+
+    $this->userAuthenticator->authenticateExistingUser($user);
+    $this->assertEquals($redirect, $this->userAuthenticator->getResponse());
+  }
+
+  /**
+   * Tests the authenticateExistingUser method with successful logging in.
+   *
+   * @covers Drupal\social_auth\User\UserAuthenticator::authenticateExistingUser
+   */
+  public function testAuthenticateExistingUserSucessLogin() {
+    $user = $this->createMock(UserInterface::class);
+    $redirect = new RedirectResponse('https://drupal.org/');
+
+    $this->userAuthenticator->expects($this->once())
+      ->method('isAdminDisabled')
+      ->with($user)
+      ->will($this->returnValue(FALSE));
+
+    $this->userAuthenticator->expects($this->once())
+      ->method('isUserRoleDisabled')
+      ->with($user)
+      ->will($this->returnValue(FALSE));
+
+    $user->expects($this->once())
+      ->method('isActive')
+      ->will($this->returnValue(TRUE));
+
+    $this->userAuthenticator->expects($this->once())
+      ->method('userLoginFinalize')
+      ->with($user);
+
+    $this->userAuthenticator->expects($this->any())
+      ->method('getPostLoginRedirection')
+      ->will($this->returnValue($redirect));
+
+    $this->userAuthenticator->setPluginId($this->pluginId);
+    $this->userAuthenticator->authenticateExistingUser($user);
+    $this->assertEquals($redirect, $this->userAuthenticator->getResponse());
+  }
+
+  /**
+   * Tests the authenticateExistingUser method with failure logging in.
+   *
+   * @covers Drupal\social_auth\User\UserAuthenticator::authenticateExistingUser
+   */
+  public function testAuthenticateExistingUserFailureLogin() {
+    $user = $this->createMock(UserInterface::class);
+    $logger = $this->createMock(LoggerChannelInterface::class);
+    $redirect = new RedirectResponse('https://drupal.org/');
+
+    $this->userAuthenticator->expects($this->once())
+      ->method('isAdminDisabled')
+      ->with($user)
+      ->will($this->returnValue(FALSE));
+
+    $this->userAuthenticator->expects($this->once())
+      ->method('isUserRoleDisabled')
+      ->with($user)
+      ->will($this->returnValue(FALSE));
+
+    $user->expects($this->once())
+      ->method('isActive')
+      ->will($this->returnValue(FALSE));
+
+    $this->loggerFactory->expects($this->once())
+      ->method('get')
+      ->with($this->pluginId)
+      ->will($this->returnValue($logger));
+
+    $logger->expects($this->once())
+      ->method('warning')
+      ->with($this->anything());
+
+    $this->messenger->expects($this->exactly(1))
+      ->method('addError');
+
+    $this->userAuthenticator->expects($this->any())
+      ->method('getLoginFormRedirection')
+      ->will($this->returnValue($redirect));
+
+    $this->userAuthenticator->setPluginId($this->pluginId);
+    $this->userAuthenticator->authenticateExistingUser($user);
+    $this->assertEquals($redirect, $this->userAuthenticator->getResponse());
+  }
+
+  /**
+   * Tests the authenticateUser method - no record for provider exists.
+   *
+   * @covers Drupal\social_auth\User\UserAuthenticator::authenticateUser
+   */
+  public function testAuthenticateUserNoRecord() {
+    $redirect = new RedirectResponse('https://drupal.org/');
+    $this->userManager->expects($this->once())
+      ->method('getDrupalUserId')
+      ->with($this->providerUserId)
+      ->will($this->returnValue(FALSE));
+
+    $this->currentUser->expects($this->once())
+      ->method('isAuthenticated')
+      ->will($this->returnValue(TRUE));
+
+    $this->userManager->expects($this->any())
+      ->method('addUserRecord')
+      ->with($this->currentUser->id(), $this->isType('string'), $this->isType('string'), $this->isType('array'))
+      ->will($this->returnValue(TRUE));
+
+    $this->userAuthenticator->expects($this->any())
+      ->method('getPostLoginRedirection')
+      ->will($this->returnValue($redirect));
+
+    $this->assertEquals($redirect, $this->userAuthenticator->authenticateUser('username', 'test@gmail.com', $this->providerUserId, 'S92xzuwssa2', 'https://www.drupal.org/files/styles/grid-2/public/default-avatar.png', ['data']));
+  }
+
+  /**
+   * Tests the authenticateUser method - provider is associated.
+   *
+   * @covers Drupal\social_auth\User\UserAuthenticator::authenticateUser
+   */
+  public function testAuthenticateUserProviderAssociated() {
+    $redirect = new RedirectResponse('https://drupal.org/');
+    $this->userManager->expects($this->once())
+      ->method('getDrupalUserId')
+      ->with($this->providerUserId)
+      ->will($this->returnValue(123456));
+
+    $this->currentUser->expects($this->once())
+      ->method('isAuthenticated')
+      ->will($this->returnValue(TRUE));
+
+    $this->userAuthenticator->expects($this->any())
+      ->method('getPostLoginRedirection')
+      ->will($this->returnValue($redirect));
+
+    $this->assertEquals($redirect, $this->userAuthenticator->authenticateUser('username', 'test@gmail.com', $this->providerUserId, 'S92xzuwssa2', 'https://www.drupal.org/files/styles/grid-2/public/default-avatar.png', ['data']));
+  }
+
+  /**
+   * Tests the authenticateUser method - auth with provider.
+   *
+   * @covers Drupal\social_auth\User\UserAuthenticator::authenticateUser
+   */
+  public function testAuthenticateUserAuthProvider() {
+    $user = $this->createMock(UserInterface::class);
+    $redirect = new RedirectResponse('https://drupal.org/');
+
+    $this->userManager->expects($this->once())
+      ->method('getDrupalUserId')
+      ->with($this->providerUserId)
+      ->will($this->returnValue(123456));
+
+    $this->currentUser->expects($this->once())
+      ->method('isAuthenticated')
+      ->will($this->returnValue(FALSE));
+
+    $this->userManager->expects($this->once())
+      ->method('loadUserByProperty')
+      ->with('uid', 123456)
+      ->will($this->returnValue($user));
+
+    $this->userAuthenticator->expects($this->once())
+      ->method('isAdminDisabled')
+      ->with($user)
+      ->will($this->returnValue(TRUE));
+
+    $this->messenger->expects($this->exactly(1))
+      ->method('addError');
+
+    $this->userAuthenticator->expects($this->any())
+      ->method('getLoginFormRedirection')
+      ->will($this->returnValue($redirect));
+
+    $this->assertEquals($redirect, $this->userAuthenticator->authenticateUser('username', 'test@gmail.com', $this->providerUserId, 'S92xzuwssa2', 'https://www.drupal.org/files/styles/grid-2/public/default-avatar.png', ['data']));
+  }
+
+  /**
+   * Tests the authenticateUser method - auth with email.
+   *
+   * @covers Drupal\social_auth\User\UserAuthenticator::authenticateUser
+   */
+  public function testAuthenticateUserAuthEmail() {
+    $user = $this->createMock(User::class);
+    $redirect = new RedirectResponse('https://drupal.org/');
+
+    $this->userManager->expects($this->once())
+      ->method('getDrupalUserId')
+      ->with($this->providerUserId)
+      ->will($this->returnValue(NULL));
+
+    $this->currentUser->expects($this->once())
+      ->method('isAuthenticated')
+      ->will($this->returnValue(FALSE));
+
+    $this->userManager->expects($this->once())
+      ->method('loadUserByProperty')
+      ->with('mail', 'test@gmail.com')
+      ->will($this->returnValue($user));
+
+    $this->userAuthenticator->expects($this->once())
+      ->method('isAdminDisabled')
+      ->with($this->anything())
+      ->will($this->returnValue(TRUE));
+
+    $this->messenger->expects($this->exactly(1))
+      ->method('addError');
+
+    $this->userAuthenticator->expects($this->any())
+      ->method('getLoginFormRedirection')
+      ->will($this->returnValue($redirect));
+
+    $this->assertEquals($redirect, $this->userAuthenticator->authenticateUser('username', 'test@gmail.com', $this->providerUserId, 'S92xzuwssa2', 'https://www.drupal.org/files/styles/grid-2/public/default-avatar.png', ['data']));
+  }
+
+  /**
+   * Tests the authenticateUser method - create new user.
+   *
+   * @covers Drupal\social_auth\User\UserAuthenticator::authenticateUser
+   */
+  public function testAuthenticateUserNewUser() {
+    $user = $this->createMock(UserInterface::class);
+    $redirect = new RedirectResponse('https://drupal.org/');
+
+    $this->userManager->expects($this->once())
+      ->method('getDrupalUserId')
+      ->with($this->providerUserId)
+      ->will($this->returnValue(NULL));
+
+    $this->currentUser->expects($this->once())
+      ->method('isAuthenticated')
+      ->will($this->returnValue(FALSE));
+
+    $this->userManager->expects($this->once())
+      ->method('createNewUser')
+      ->with($this->anything())
+      ->will($this->returnValue($user));
+
+    $this->userAuthenticator->expects($this->once())
+      ->method('isApprovalRequired')
+      ->will($this->returnValue(FALSE));
+
+    $user->expects($this->once())
+      ->method('isActive')
+      ->will($this->returnValue(TRUE));
+
+    $this->userAuthenticator->expects($this->once())
+      ->method('userLoginFinalize')
+      ->with($user);
+
+    $this->userAuthenticator->expects($this->any())
+      ->method('redirectToUserForm')
+      ->with($user)
+      ->will($this->returnValue($redirect));
+
+    $this->userAuthenticator->setPluginId($this->pluginId);
+    $this->assertEquals($redirect, $this->userAuthenticator->authenticateUser('username', '', $this->providerUserId, 'S92xzuwssa2', 'https://www.drupal.org/files/styles/grid-2/public/default-avatar.png', ['data']));
   }
 
 }
