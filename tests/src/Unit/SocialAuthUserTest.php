@@ -49,7 +49,7 @@ class SocialAuthUserTest extends UnitTestCase {
   /**
    * The tested Social Auth UserAuthenticator.
    *
-   * @var \Drupal\social_auth\User\UserAuthenticator
+   * @var \Drupal\social_auth\User\UserAuthenticator|\PHPUnit_Framework_MockObject_MockObject
    */
   protected $userAuthenticator;
 
