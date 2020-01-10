@@ -56,49 +56,49 @@ class SocialAuthUserTest extends UnitTestCase {
   /**
    * The mocked AccountProxyInterface.
    *
-   * @var \Drupal\Core\Session\AccountProxyInterface
+   * @var \Drupal\Core\Session\AccountProxyInterface|\PHPUnit_Framework_MockObject_MockObject
    */
   protected $currentUser;
 
   /**
    * The mocked LoggerChannelFactoryInterface.
    *
-   * @var \Drupal\Core\Logger\LoggerChannelFactoryInterface
+   * @var \Drupal\Core\Logger\LoggerChannelFactoryInterface|\PHPUnit_Framework_MockObject_MockObject
    */
   protected $loggerFactory;
 
   /**
    * The mocked Messenger service.
    *
-   * @var \Drupal\Core\Messenger\MessengerInterface
+   * @var \Drupal\Core\Messenger\MessengerInterface|\PHPUnit_Framework_MockObject_MockObject
    */
   protected $messenger;
 
   /**
    * The mocked Data Handler.
    *
-   * @var \Drupal\social_auth\SocialAuthDataHandler
+   * @var \Drupal\social_auth\SocialAuthDataHandler|\PHPUnit_Framework_MockObject_MockObject
    */
   protected $dataHandler;
 
   /**
    * The mocked Config Factory.
    *
-   * @var \Drupal\Core\Config\ConfigFactoryInterface
+   * @var \Drupal\Core\Config\ConfigFactoryInterface|\PHPUnit_Framework_MockObject_MockObject
    */
   protected $configFactory;
 
   /**
    * The mocked Route Provider.
    *
-   * @var \Drupal\Core\Routing\RouteProviderInterface
+   * @var \Drupal\Core\Routing\RouteProviderInterface|\PHPUnit_Framework_MockObject_MockObject
    */
   protected $routeProvider;
 
   /**
    * The mocked Event Dispatcher.
    *
-   * @var \Symfony\Component\EventDispatcher\EventDispatcherInterface
+   * @var \Symfony\Component\EventDispatcher\EventDispatcherInterface|\PHPUnit_Framework_MockObject_MockObject
    */
   protected $eventDispatcher;
 
