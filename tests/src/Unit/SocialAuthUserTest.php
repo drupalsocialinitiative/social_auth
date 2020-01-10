@@ -449,6 +449,7 @@ class SocialAuthUserTest extends UnitTestCase {
    * @covers Drupal\social_auth\User\UserAuthenticator::loginUser
    */
   public function testLoginUserNotActive() {
+    /** @var \Drupal\user\UserInterface||\PHPUnit\Framework\MockObject\MockObject $user */
     $user = $this->createMock(UserInterface::class);
     $logger = $this->createMock(LoggerChannelInterface::class);
     $user->expects($this->once())
@@ -474,6 +475,7 @@ class SocialAuthUserTest extends UnitTestCase {
    * @covers Drupal\social_auth\User\UserAuthenticator::loginUser
    */
   public function testLoginUserActive() {
+    /** @var \Drupal\user\UserInterface||\PHPUnit\Framework\MockObject\MockObject $user */
     $user = $this->createMock(UserInterface::class);
 
     $user->expects($this->once())
@@ -581,6 +583,7 @@ class SocialAuthUserTest extends UnitTestCase {
   public function testAuthenticateNewUserValidApproveNeed() {
     $this->prepareAuthenticateNewUser();
     $redirect = new RedirectResponse('https://drupal.org/');
+    /** @var \Drupal\user\UserInterface||\PHPUnit\Framework\MockObject\MockObject $user */
     $user = $this->createMock(UserInterface::class);
 
     $this->userAuthenticator->expects($this->once())
@@ -607,6 +610,7 @@ class SocialAuthUserTest extends UnitTestCase {
     $this->prepareAuthenticateNewUser();
 
     $redirect = new RedirectResponse('https://drupal.org/');
+    /** @var \Drupal\user\UserInterface||\PHPUnit\Framework\MockObject\MockObject $user */
     $user = $this->createMock(UserInterface::class);
 
     $this->userAuthenticator->expects($this->once())
@@ -639,6 +643,7 @@ class SocialAuthUserTest extends UnitTestCase {
   public function testAuthenticateNewUserValidLoginFormRedirect() {
     $this->prepareAuthenticateNewUser();
     $redirect = new RedirectResponse('https://drupal.org/');
+    /** @var \Drupal\user\UserInterface||\PHPUnit\Framework\MockObject\MockObject $user */
     $user = $this->createMock(UserInterface::class);
 
     $this->userAuthenticator->expects($this->once())
@@ -668,6 +673,7 @@ class SocialAuthUserTest extends UnitTestCase {
   public function testAuthenticateNewUserValidLoginPostRedirect() {
     $this->prepareAuthenticateNewUser();
     $redirect = new RedirectResponse('https://drupal.org/');
+    /** @var \Drupal\user\UserInterface||\PHPUnit\Framework\MockObject\MockObject $user */
     $user = $this->createMock(UserInterface::class);
 
     $this->userAuthenticator->expects($this->once())
@@ -752,6 +758,7 @@ class SocialAuthUserTest extends UnitTestCase {
    */
   public function testAuthenticateExistingUserAdminDisabled() {
     $this->prepareAuthenticateExistingUser();
+    /** @var \Drupal\user\UserInterface||\PHPUnit\Framework\MockObject\MockObject $user */
     $user = $this->createMock(UserInterface::class);
     $redirect = new RedirectResponse('https://drupal.org/');
 
@@ -778,6 +785,7 @@ class SocialAuthUserTest extends UnitTestCase {
    */
   public function testAuthenticateExistingUserRoleDisabled() {
     $this->prepareAuthenticateExistingUser();
+    /** @var \Drupal\user\UserInterface||\PHPUnit\Framework\MockObject\MockObject $user */
     $user = $this->createMock(UserInterface::class);
     $redirect = new RedirectResponse('https://drupal.org/');
 
@@ -809,6 +817,7 @@ class SocialAuthUserTest extends UnitTestCase {
    */
   public function testAuthenticateExistingUserSucessLogin() {
     $this->prepareAuthenticateExistingUser();
+    /** @var \Drupal\user\UserInterface||\PHPUnit\Framework\MockObject\MockObject $user */
     $user = $this->createMock(UserInterface::class);
     $redirect = new RedirectResponse('https://drupal.org/');
 
@@ -843,6 +852,7 @@ class SocialAuthUserTest extends UnitTestCase {
    */
   public function testAuthenticateExistingUserFailureLogin() {
     $this->prepareAuthenticateExistingUser();
+    /** @var \Drupal\user\UserInterface||\PHPUnit\Framework\MockObject\MockObject $user */
     $user = $this->createMock(UserInterface::class);
     $redirect = new RedirectResponse('https://drupal.org/');
 
@@ -992,6 +1002,7 @@ class SocialAuthUserTest extends UnitTestCase {
    */
   public function testAuthenticateUserNewUser() {
     $this->prepareAuthenticateUser();
+    /** @var \Drupal\user\UserInterface||\PHPUnit\Framework\MockObject\MockObject $user */
     $user = $this->createMock(UserInterface::class);
     $redirect = new RedirectResponse('https://drupal.org/');
 
