@@ -126,7 +126,7 @@ class UserAuthenticator extends SocialApiUserAuthenticator {
       if ($user_id === FALSE) {
         $this->associateNewProvider($provider_user_id, $token, $data);
 
-        return $this->response;
+        return $this->getResponse();
       }
       // User is authenticated and provider is already associated.
       else {
@@ -138,14 +138,14 @@ class UserAuthenticator extends SocialApiUserAuthenticator {
     if ($user_id) {
       $this->authenticateWithProvider($user_id);
 
-      return $this->response;
+      return $this->getResponse();
     }
 
     // Try to authenticate user using email address.
     if ($email) {
       // If authentication with email was successful.
       if ($this->authenticateWithEmail($email, $provider_user_id, $token, $data)) {
-        return $this->response;
+        return $this->getResponse();
       }
     }
 
@@ -156,7 +156,7 @@ class UserAuthenticator extends SocialApiUserAuthenticator {
 
     $this->authenticateNewUser($drupal_user);
 
-    return $this->response;
+    return $this->getResponse();
   }
 
   /**
@@ -171,13 +171,13 @@ class UserAuthenticator extends SocialApiUserAuthenticator {
    */
   public function associateNewProvider($provider_user_id, $token, $data) {
     if ($this->userManager->addUserRecord($this->currentUser->id(), $provider_user_id, $token, $data)) {
-      $this->response = $this->getPostLoginRedirection();
+      $this->setResponse($this->getPostLoginRedirection());
 
       return;
     }
 
     $this->messenger->addError($this->t('New provider could not be associated.'));
-    $this->response = $this->getLoginFormRedirection();
+    $this->setResponse($this->getLoginFormRedirection());
   }
 
   /**
@@ -266,7 +266,7 @@ class UserAuthenticator extends SocialApiUserAuthenticator {
       $this->nullifySessionKeys();
       $this->messenger->addError($this->t('Authentication for Admin (user 1) is disabled.'));
 
-      $this->response = $this->getLoginFormRedirection();
+      $this->setResponse($this->getLoginFormRedirection());
 
       return;
     }
@@ -276,20 +276,20 @@ class UserAuthenticator extends SocialApiUserAuthenticator {
     if ($disabled_role) {
       $this->messenger->addError($this->t("Authentication for '@role' role is disabled.", ['@role' => $disabled_role]));
 
-      $this->response = $this->getLoginFormRedirection();
+      $this->setResponse($this->getLoginFormRedirection());
 
       return;
     }
 
     // If user could be logged in.
     if ($this->loginUser($drupal_user)) {
-      $this->response = $this->getPostLoginRedirection();
+      $this->setResponse($this->getPostLoginRedirection());
     }
     else {
       $this->nullifySessionKeys();
       $this->messenger->addError($this->t('Your account has not been approved yet or might have been canceled, please contact the administrator.'));
 
-      $this->response = $this->getLoginFormRedirection();
+      $this->setResponse($this->getLoginFormRedirection());
     }
   }
 
@@ -309,7 +309,7 @@ class UserAuthenticator extends SocialApiUserAuthenticator {
         $this->messenger->addWarning($this->t("Your account was created, but it needs administrator's approval."));
         $this->nullifySessionKeys();
 
-        $this->response = $this->getLoginFormRedirection();
+        $this->setResponse($this->getLoginFormRedirection());
 
         return;
       }
@@ -320,12 +320,11 @@ class UserAuthenticator extends SocialApiUserAuthenticator {
         $redirect = $this->redirectToUserForm($drupal_user);
 
         if ($redirect) {
-          $this->response = $redirect;
+          $this->setResponse($redirect);
 
           return;
         }
-
-        $this->response = $this->getPostLoginRedirection();
+        $this->setResponse($this->getPostLoginRedirection());
 
         return;
       }
@@ -336,8 +335,7 @@ class UserAuthenticator extends SocialApiUserAuthenticator {
     }
 
     $this->nullifySessionKeys();
-
-    $this->response = $this->getLoginFormRedirection();
+    $this->setResponse($this->getLoginFormRedirection());
   }
 
   /**
@@ -438,6 +436,26 @@ class UserAuthenticator extends SocialApiUserAuthenticator {
   public function dispatchBeforeRedirect($destination = NULL) {
     $event = new BeforeRedirectEvent($this->dataHandler, $this->getPluginId(), $destination);
     $this->eventDispatcher->dispatch(SocialAuthEvents::BEFORE_REDIRECT, $event);
+  }
+
+  /**
+   * Gets the response.
+   *
+   * @return string
+   *   Response
+   */
+  public function getResponse() {
+    return $this->response;
+  }
+
+  /**
+   * Sets the response.
+   *
+   * @var string
+   *   Response
+   */
+  public function setResponse($new_response) {
+    $this->response = $new_response;
   }
 
 }
